@@ -4,48 +4,33 @@ struct ContentView: View {
     @EnvironmentObject private var store: TranscriptStore
     @AppStorage("deepgramAPIKey") private var deepgramAPIKey = ""
     @AppStorage("openAIAPIKey") private var openAIAPIKey = ""
-    @State private var showKeyField = false
+    @State private var showKeys = false
     @State private var selectedTab = 0
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                MusliBackground()
-                VStack(spacing: 0) {
-                    statusBar
-                    TabView(selection: $selectedTab) {
-                        chatList
-                            .tabItem { Label("Transcript", systemImage: "text.bubble") }
-                            .tag(0)
-                        summaryPane
-                            .tabItem { Label("Notes", systemImage: "leaf") }
-                            .tag(1)
-                    }
-                    .tint(MusliTheme.forest)
-                    controlBar
+        VStack(spacing: 0) {
+            header
+            Rectangle()
+                .fill(MusliTheme.line)
+                .frame(height: 1)
+            Group {
+                if selectedTab == 0 {
+                    transcriptPane
+                } else {
+                    notesPane
                 }
             }
-            .navigationTitle("Müsli")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(MusliTheme.paper.opacity(0.95), for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showKeyField.toggle()
-                    } label: {
-                        Image(systemName: keysConfigured ? "key.fill" : "key")
-                            .foregroundStyle(MusliTheme.forest)
-                    }
-                }
-            }
-            .sheet(isPresented: $showKeyField) {
-                apiKeySheet
-            }
-            .onAppear { syncKeys() }
-            .onChange(of: deepgramAPIKey) { _, _ in syncKeys() }
-            .onChange(of: openAIAPIKey) { _, _ in syncKeys() }
-            .onChange(of: store.summaryMarkdown) { _, newValue in
-                if !newValue.isEmpty { selectedTab = 1 }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            controlBar
+        }
+        .background(MusliTheme.paper.ignoresSafeArea())
+        .sheet(isPresented: $showKeys) { keysSheet }
+        .onAppear { syncKeys() }
+        .onChange(of: deepgramAPIKey) { _, _ in syncKeys() }
+        .onChange(of: openAIAPIKey) { _, _ in syncKeys() }
+        .onChange(of: store.summaryMarkdown) { _, newValue in
+            if !newValue.isEmpty {
+                withAnimation { selectedTab = 1 }
             }
         }
     }
@@ -59,44 +44,75 @@ struct ContentView: View {
         store.openAIAPIKey = openAIAPIKey
     }
 
-    // MARK: - Status
+    // MARK: - Header
 
-    private var statusBar: some View {
-        HStack(spacing: 10) {
-            StatusPill(label: "Extension", value: store.extensionStatus, tint: extensionTint)
-            StatusPill(label: "Deepgram", value: store.deepgramStatus, tint: deepgramTint)
-            Spacer(minLength: 0)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                Text("Müsli")
+                    .font(MusliTheme.title(30))
+                    .foregroundStyle(MusliTheme.ink)
+                Spacer()
+                Button {
+                    showKeys = true
+                } label: {
+                    Image(systemName: "key")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(keysConfigured ? MusliTheme.inkMuted : MusliTheme.berry)
+                        .frame(width: 34, height: 34)
+                        .background(MusliTheme.oat, in: Circle())
+                }
+                .accessibilityLabel("API keys")
+            }
+
+            HStack(spacing: 18) {
+                StatusDot(
+                    label: "Extension",
+                    value: store.extensionStatus,
+                    color: extensionColor,
+                    pulsing: store.extensionStatus == "Recording"
+                )
+                StatusDot(
+                    label: "Deepgram",
+                    value: store.deepgramStatus,
+                    color: deepgramColor,
+                    pulsing: store.deepgramStatus == "Connecting"
+                )
+            }
+
+            SegmentedTabs(selection: $selectedTab, titles: ["Transcript", "Notes"])
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 14)
     }
 
-    private var extensionTint: Color {
+    private var extensionColor: Color {
         switch store.extensionStatus {
-        case "Recording": return MusliTheme.forest
+        case "Recording": return MusliTheme.leaf
         case "Waiting": return MusliTheme.honey
-        case "Error": return .red
-        default: return MusliTheme.inkMuted.opacity(0.5)
+        case "Error": return MusliTheme.berry
+        default: return MusliTheme.inkMuted.opacity(0.4)
         }
     }
 
-    private var deepgramTint: Color {
+    private var deepgramColor: Color {
         switch store.deepgramStatus {
-        case "Connected": return MusliTheme.forest
+        case "Connected": return MusliTheme.leaf
         case "Connecting": return MusliTheme.honey
-        case "Error": return .red
-        default: return MusliTheme.inkMuted.opacity(0.5)
+        case "Error": return MusliTheme.berry
+        default: return MusliTheme.inkMuted.opacity(0.4)
         }
     }
 
     // MARK: - Transcript
 
-    private var chatList: some View {
+    private var transcriptPane: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(spacing: 12) {
                     if store.messages.isEmpty {
-                        emptyTranscript
+                        emptyBowl
                     }
                     ForEach(store.messages) { message in
                         ChatBubbleView(message: message)
@@ -104,7 +120,7 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.vertical, 16)
             }
             .onChange(of: store.messages.count) { _, _ in
                 if let last = store.messages.last {
@@ -116,110 +132,144 @@ struct ContentView: View {
         }
     }
 
-    private var emptyTranscript: some View {
-        VStack(spacing: 14) {
+    private var emptyBowl: some View {
+        VStack(spacing: 10) {
             Text("🥣")
-                .font(.system(size: 52))
-            Text("Your meeting, transcribed")
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 56))
+            Text("Nothing in the bowl yet")
+                .font(MusliTheme.title(22))
                 .foregroundStyle(MusliTheme.ink)
-            Text("Broadcast to capture · Listen to transcribe\nYou on mic · Others on system audio")
+            Text("Tap the bowl to start capturing, then Listen.\nYour mic is Me, system audio is Them.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(MusliTheme.inkMuted)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 48)
+        .padding(.top, 72)
         .padding(.horizontal, 24)
     }
 
-    // MARK: - Summary
+    // MARK: - Notes
 
-    private var summaryPane: some View {
+    private var notesPane: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Meeting notes")
+                    .font(MusliTheme.title(26))
+                    .foregroundStyle(MusliTheme.ink)
+                Text(Date(), format: .dateTime.weekday(.wide).day().month(.wide))
+                    .font(.subheadline)
+                    .foregroundStyle(MusliTheme.inkMuted)
+                    .padding(.bottom, 8)
+
                 if store.isSummarizing {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         ProgressView()
-                            .tint(MusliTheme.forest)
-                        Text("Stirring your notes…")
-                            .font(.subheadline)
+                            .tint(MusliTheme.leaf)
+                        Text("Stirring your müsli…")
                             .foregroundStyle(MusliTheme.inkMuted)
                     }
-                } else if let error = store.summaryError, store.summaryMarkdown.isEmpty {
-                    Text(error)
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                    Button("Try again") {
-                        store.requestSummary(reason: "Retry")
-                    }
-                    .buttonStyle(MusliSecondaryButtonStyle())
+                    .padding(.top, 12)
                 } else if store.summaryMarkdown.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Notes appear here")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(MusliTheme.ink)
-                        Text("When the broadcast ends or you tap Stop, Müsli writes a short summary.")
+                    if let error = store.summaryError {
+                        Text(error)
                             .font(.subheadline)
+                            .foregroundStyle(MusliTheme.berry)
+                            .padding(.top, 8)
+                        regenerateButton(title: "Try again")
+                    } else {
+                        Text("Notes appear here when the broadcast ends or you tap Stop.")
                             .foregroundStyle(MusliTheme.inkMuted)
+                            .padding(.top, 8)
                     }
                 } else {
                     MeetingNotesView(markdown: store.summaryMarkdown)
-                        .padding(16)
-                        .background(MusliTheme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    Button("Regenerate notes") {
-                        store.requestSummary(reason: "Regenerate")
-                    }
-                    .buttonStyle(MusliSecondaryButtonStyle())
+                    regenerateButton(title: "Regenerate")
+                        .padding(.top, 16)
                 }
             }
-            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
         }
+    }
+
+    private func regenerateButton(title: String) -> some View {
+        Button {
+            store.requestSummary(reason: title)
+        } label: {
+            Label(title, systemImage: "arrow.clockwise")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(MusliTheme.ink)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(MusliTheme.oat, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Controls
 
     private var controlBar: some View {
-        VStack(spacing: 14) {
-            HStack(alignment: .center, spacing: 20) {
-                BroadcastPickerView(isLive: store.broadcastLive)
+        HStack(spacing: 14) {
+            BroadcastBowlButton(isLive: store.broadcastLive)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(store.isLive ? "Listening…" : "Ready when you are")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MusliTheme.ink)
-
-                    Button {
-                        if store.isLive {
-                            store.stop()
-                        } else {
-                            syncKeys()
-                            store.start()
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: store.isLive ? "stop.fill" : "waveform")
-                            Text(store.isLive ? "Stop" : "Listen")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                    }
-                    .buttonStyle(MusliPrimaryButtonStyle(isDestructive: store.isLive))
-                    .disabled(deepgramAPIKey.isEmpty && !store.isLive)
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(controlTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MusliTheme.ink)
+                Text(controlSubtitle)
+                    .font(.caption)
+                    .foregroundStyle(MusliTheme.inkMuted)
+                    .lineLimit(2)
             }
+
+            Spacer(minLength: 8)
+
+            Button {
+                if store.isLive {
+                    store.stop()
+                } else {
+                    syncKeys()
+                    store.start()
+                }
+            } label: {
+                Label(store.isLive ? "Stop" : "Listen", systemImage: store.isLive ? "stop.fill" : "waveform")
+            }
+            .buttonStyle(MusliListenButtonStyle(isStop: store.isLive))
+            .disabled(deepgramAPIKey.isEmpty && !store.isLive)
+            .opacity(deepgramAPIKey.isEmpty && !store.isLive ? 0.4 : 1)
         }
-        .padding(16)
-        .background(
-            MusliTheme.oat.opacity(0.85),
-            in: UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background {
+            Rectangle()
+                .fill(MusliTheme.card)
+                .shadow(color: .black.opacity(0.06), radius: 12, y: -2)
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 
-    // MARK: - Keys sheet
+    private var controlTitle: String {
+        switch (store.broadcastLive, store.isLive) {
+        case (true, true): return "Capturing & transcribing"
+        case (true, false): return "Capturing"
+        case (false, true): return "Listening"
+        case (false, false): return "Ready"
+        }
+    }
 
-    private var apiKeySheet: some View {
+    private var controlSubtitle: String {
+        switch (store.broadcastLive, store.isLive) {
+        case (true, true): return "Hop over to your call — Müsli's got it."
+        case (true, false): return "Tap Listen to start transcribing."
+        case (false, true): return "Tap the bowl to start capturing."
+        case (false, false): return "Tap the bowl to capture your meeting."
+        }
+    }
+
+    // MARK: - Keys
+
+    private var keysSheet: some View {
         NavigationStack {
             Form {
                 Section {
@@ -228,64 +278,29 @@ struct ContentView: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("Live transcription via Deepgram.")
+                    Text("Live transcription.")
                 }
-
                 Section {
                     SecureField("OpenAI API key", text: $openAIAPIKey)
                         .textContentType(.password)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("Meeting notes via OpenAI (sk-…).")
+                    Text("Meeting notes. Starts with sk-.")
                 }
             }
-            .navigationTitle("API Keys")
+            .scrollContentBackground(.hidden)
+            .background(MusliTheme.paper)
+            .navigationTitle("API keys")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { showKeyField = false }
+                    Button("Done") { showKeys = false }
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-    }
-}
-
-// MARK: - Button styles
-
-struct MusliPrimaryButtonStyle: ButtonStyle {
-    var isDestructive = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.headline)
-            .foregroundStyle(.white)
-            .background {
-                Capsule().fill(buttonFill)
-            }
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
-    }
-
-    private var buttonFill: AnyShapeStyle {
-        if isDestructive {
-            AnyShapeStyle(LinearGradient(colors: [.red.opacity(0.85), .red], startPoint: .topLeading, endPoint: .bottomTrailing))
-        } else {
-            AnyShapeStyle(MusliTheme.listenGradient)
-        }
-    }
-}
-
-struct MusliSecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(MusliTheme.forest)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(MusliTheme.oat, in: Capsule())
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+        .tint(MusliTheme.leaf)
+        .presentationDetents([.medium])
     }
 }
 

@@ -1,64 +1,82 @@
 import SwiftUI
 import ReplayKit
 
-/// Styled wrapper around RPSystemBroadcastPickerView — oat card, pulsing ring when live.
-struct BroadcastPickerView: View {
+/// A cereal bowl that wobbles and ripples while capturing.
+/// The real `RPSystemBroadcastPickerView` sits on top as an invisible tap target.
+struct BroadcastBowlButton: View {
     var isLive: Bool
 
     var body: some View {
         ZStack {
             if isLive {
-                Circle()
-                    .stroke(MusliTheme.recordGradient, lineWidth: 3)
-                    .frame(width: 76, height: 76)
-                    .opacity(0.85)
-                    .scaleEffect(isLive ? 1.08 : 1.0)
-                    .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isLive)
+                ripples
             }
 
-            VStack(spacing: 6) {
-                ZStack {
+            Circle()
+                .fill(isLive ? MusliTheme.leafWash : MusliTheme.oat)
+                .overlay(Circle().strokeBorder(isLive ? MusliTheme.leaf : MusliTheme.line, lineWidth: 1.5))
+                .frame(width: 56, height: 56)
+
+            TimelineView(.animation(paused: !isLive)) { context in
+                let t = context.date.timeIntervalSinceReferenceDate
+                Text("🥣")
+                    .font(.system(size: 28))
+                    .rotationEffect(.degrees(isLive ? sin(t * 3) * 9 : 0))
+                    .offset(y: isLive ? sin(t * 6) * 1.5 : 0)
+            }
+
+            if isLive {
+                Circle()
+                    .fill(MusliTheme.berry)
+                    .frame(width: 12, height: 12)
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    .offset(x: 20, y: -20)
+            }
+
+            BroadcastPicker()
+                .frame(width: 56, height: 56)
+        }
+        .frame(width: 64, height: 64)
+        .accessibilityLabel(isLive ? "Capturing — tap to stop" : "Start capture")
+    }
+
+    private var ripples: some View {
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            ZStack {
+                ForEach(0..<2, id: \.self) { i in
+                    let phase = (t / 1.8 + Double(i) / 2).truncatingRemainder(dividingBy: 1)
                     Circle()
-                        .fill(MusliTheme.recordGradient)
-                        .frame(width: 64, height: 64)
-                        .shadow(color: MusliTheme.honey.opacity(0.35), radius: 10, y: 4)
-
-                    BroadcastPicker()
-                        .frame(width: 64, height: 64)
-                        .clipShape(Circle())
+                        .stroke(MusliTheme.leaf.opacity(0.45 * (1 - phase)), lineWidth: 2)
+                        .frame(width: 56, height: 56)
+                        .scaleEffect(1 + phase * 0.5)
                 }
-
-                Text(isLive ? "Recording" : "Broadcast")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(MusliTheme.ink)
             }
         }
-        .accessibilityLabel(isLive ? "Broadcast recording" : "Start broadcast")
+        .allowsHitTesting(false)
     }
 }
 
 struct BroadcastPicker: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
-        let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 64, height: 64))
+        let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 56, height: 56))
         picker.preferredExtension = "com.granola.iosmeeting.BroadcastExtension"
         picker.showsMicrophoneButton = true
-        stylePicker(picker)
+        hideSystemGlyph(picker)
         return picker
     }
 
     func updateUIView(_ uiView: RPSystemBroadcastPickerView, context: Context) {
-        stylePicker(uiView)
+        hideSystemGlyph(uiView)
     }
 
-    private func stylePicker(_ picker: RPSystemBroadcastPickerView) {
+    private func hideSystemGlyph(_ picker: RPSystemBroadcastPickerView) {
         picker.backgroundColor = .clear
         for case let button as UIButton in picker.subviews {
-            button.tintColor = UIColor.white
-            button.setImage(
-                UIImage(systemName: "dot.radiowaves.left.and.right")?
-                    .withConfiguration(UIImage.SymbolConfiguration(pointSize: 22, weight: .semibold)),
-                for: .normal
-            )
+            button.setImage(nil, for: .normal)
+            button.setImage(nil, for: .highlighted)
+            button.setImage(nil, for: .selected)
+            button.tintColor = .clear
         }
     }
 }

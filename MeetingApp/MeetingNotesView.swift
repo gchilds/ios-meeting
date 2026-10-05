@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Line-based renderer: `AttributedString(markdown:)` collapses single newlines.
 struct MeetingNotesView: View {
     let markdown: String
 
@@ -9,26 +10,28 @@ struct MeetingNotesView: View {
                 switch block {
                 case .heading(let text):
                     Text(inline(text))
-                        .font(.title3.weight(.semibold))
+                        .font(MusliTheme.title(19))
                         .foregroundStyle(MusliTheme.ink)
-                        .padding(.top, 10)
+                        .padding(.top, 14)
                 case .bullet(let text):
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("•")
-                            .foregroundStyle(MusliTheme.forest)
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text("–")
+                            .foregroundStyle(MusliTheme.leaf)
                         Text(inline(text))
                             .foregroundStyle(MusliTheme.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 case .paragraph(let text):
                     Text(inline(text))
-                        .foregroundStyle(MusliTheme.inkMuted)
+                        .foregroundStyle(MusliTheme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 case .spacer:
-                    Spacer().frame(height: 6)
+                    Spacer().frame(height: 4)
                 }
             }
         }
+        .font(.body)
+        .lineSpacing(3)
         .frame(maxWidth: .infinity, alignment: .leading)
         .textSelection(.enabled)
     }
@@ -50,8 +53,9 @@ struct MeetingNotesView: View {
                 if trimmed.hasPrefix("### ") { return .heading(String(trimmed.dropFirst(4))) }
                 if trimmed.hasPrefix("## ") { return .heading(String(trimmed.dropFirst(3))) }
                 if trimmed.hasPrefix("# ") { return .heading(String(trimmed.dropFirst(2))) }
-                if trimmed.hasPrefix("- ") { return .bullet(String(trimmed.dropFirst(2))) }
-                if trimmed.hasPrefix("* ") { return .bullet(String(trimmed.dropFirst(2))) }
+                if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
+                    return .bullet(String(trimmed.dropFirst(2)))
+                }
                 if let match = trimmed.range(of: #"^\d+\.\s+"#, options: .regularExpression) {
                     return .bullet(String(trimmed[match.upperBound...]))
                 }

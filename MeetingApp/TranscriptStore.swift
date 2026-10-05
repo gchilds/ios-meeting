@@ -137,7 +137,7 @@ final class TranscriptStore: ObservableObject {
         }
 
         let transcript = finals.map { msg in
-            let who = msg.speaker == .us ? "You" : "Others"
+            let who = msg.speaker == .us ? "Us" : "Them"
             return "\(who): \(msg.text)"
         }.joined(separator: "\n")
 

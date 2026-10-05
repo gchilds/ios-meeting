@@ -3,49 +3,47 @@ import SwiftUI
 struct ChatBubbleView: View {
     let message: ChatMessage
 
-    private var isYou: Bool { message.speaker == .us }
+    private var isMe: Bool { message.speaker == .us }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            if isYou { Spacer(minLength: 40) }
+        HStack {
+            if isMe { Spacer(minLength: 48) }
 
-            VStack(alignment: isYou ? .trailing : .leading, spacing: 4) {
-                Text(isYou ? "You" : "Others")
+            VStack(alignment: isMe ? .trailing : .leading, spacing: 4) {
+                Text(isMe ? "Me" : "Them")
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(isYou ? MusliTheme.forest : MusliTheme.inkMuted)
+                    .textCase(.uppercase)
+                    .tracking(0.6)
+                    .foregroundStyle(isMe ? MusliTheme.leaf : MusliTheme.inkMuted)
                     .padding(.horizontal, 4)
 
-                Group {
-                    if isYou {
-                        Text(message.text)
-                            .foregroundStyle(.white)
-                            .background(MusliTheme.listenGradient)
-                    } else {
-                        Text(message.text)
-                            .foregroundStyle(MusliTheme.ink)
-                            .background(MusliTheme.othersBubble)
-                    }
-                }
-                .font(.body)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .opacity(message.isFinal ? 1.0 : 0.7)
+                Text(message.text)
+                    .italic(!message.isFinal)
+                    .font(.body)
+                    .foregroundStyle(message.isFinal ? MusliTheme.ink : MusliTheme.inkMuted)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        isMe ? MusliTheme.leafWash : MusliTheme.card,
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(isMe ? .clear : MusliTheme.line, lineWidth: 1)
+                    )
             }
 
-            if !isYou { Spacer(minLength: 40) }
+            if !isMe { Spacer(minLength: 48) }
         }
     }
 }
 
 #Preview {
-    ZStack {
-        MusliBackground()
-        VStack(spacing: 12) {
-            ChatBubbleView(message: ChatMessage(speaker: .them, text: "How are the Q3 numbers looking?", isFinal: true))
-            ChatBubbleView(message: ChatMessage(speaker: .us, text: "Ahead of plan — shipping next week.", isFinal: true))
-            ChatBubbleView(message: ChatMessage(speaker: .them, text: "Great, can you…", isFinal: false))
-        }
-        .padding()
+    VStack(spacing: 12) {
+        ChatBubbleView(message: ChatMessage(speaker: .them, text: "How are the Q3 numbers looking?", isFinal: true))
+        ChatBubbleView(message: ChatMessage(speaker: .us, text: "Ahead of plan — shipping next week.", isFinal: true))
+        ChatBubbleView(message: ChatMessage(speaker: .them, text: "Great, can you…", isFinal: false))
     }
+    .padding()
+    .background(MusliTheme.paper)
 }
