@@ -3,15 +3,24 @@ import ReplayKit
 
 struct ContentView: View {
     @EnvironmentObject private var store: TranscriptStore
-    @AppStorage("deepgramAPIKey") private var apiKey = ""
+    @AppStorage("deepgramAPIKey") private var deepgramAPIKey = ""
+    @AppStorage("openAIAPIKey") private var openAIAPIKey = ""
     @State private var showKeyField = false
+    @State private var selectedTab = 0
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 statusBar
                 Divider()
-                chatList
+                TabView(selection: $selectedTab) {
+                    chatList
+                        .tabItem { Label("Transcript", systemImage: "bubble.left.and.bubble.right") }
+                        .tag(0)
+                    summaryPane
+                        .tabItem { Label("Summary", systemImage: "doc.text") }
+                        .tag(1)
+                }
                 Divider()
                 controlBar
             }
@@ -22,20 +31,29 @@ struct ContentView: View {
                     Button {
                         showKeyField.toggle()
                     } label: {
-                        Image(systemName: apiKey.isEmpty ? "key" : "key.fill")
+                        Image(systemName: keysConfigured ? "key.fill" : "key")
                     }
                 }
             }
             .sheet(isPresented: $showKeyField) {
                 apiKeySheet
             }
-            .onAppear {
-                store.apiKey = apiKey
-            }
-            .onChange(of: apiKey) { _, newValue in
-                store.apiKey = newValue
+            .onAppear { syncKeys() }
+            .onChange(of: deepgramAPIKey) { _, _ in syncKeys() }
+            .onChange(of: openAIAPIKey) { _, _ in syncKeys() }
+            .onChange(of: store.summaryMarkdown) { _, newValue in
+                if !newValue.isEmpty { selectedTab = 1 }
             }
         }
+    }
+
+    private var keysConfigured: Bool {
+        !deepgramAPIKey.isEmpty && !openAIAPIKey.isEmpty
+    }
+
+    private func syncKeys() {
+        store.deepgramAPIKey = deepgramAPIKey
+        store.openAIAPIKey = openAIAPIKey
     }
 
     // MARK: - Subviews
@@ -64,7 +82,7 @@ struct ContentView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     if store.messages.isEmpty {
-                        emptyState
+                        emptyTranscript
                     }
                     ForEach(store.messages) { message in
                         ChatBubbleView(message: message)
@@ -85,7 +103,49 @@ struct ContentView: View {
         .background(Color(.systemBackground))
     }
 
-    private var emptyState: some View {
+    private var summaryPane: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if store.isSummarizing {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Writing meeting notes…")
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else if let error = store.summaryError, store.summaryMarkdown.isEmpty {
+                    Text(error)
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                    Button("Retry summary") {
+                        store.requestSummary(reason: "Retry")
+                    }
+                    .buttonStyle(.bordered)
+                } else if store.summaryMarkdown.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("No summary yet")
+                            .font(.headline)
+                        Text("Notes are generated with OpenAI when you Stop, or when the broadcast ends.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text(LocalizedStringKey(store.summaryMarkdown))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if store.summaryError != nil {
+                        Button("Regenerate") {
+                            store.requestSummary(reason: "Regenerate")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .background(Color(.systemBackground))
+    }
+
+    private var emptyTranscript: some View {
         VStack(spacing: 8) {
             Image(systemName: "waveform.circle")
                 .font(.system(size: 40))
@@ -104,7 +164,6 @@ struct ContentView: View {
 
     private var controlBar: some View {
         HStack(spacing: 16) {
-            // System broadcast picker — user chooses this app's extension.
             BroadcastPicker()
                 .frame(width: 44, height: 44)
 
@@ -112,7 +171,7 @@ struct ContentView: View {
                 if store.isLive {
                     store.stop()
                 } else {
-                    store.apiKey = apiKey
+                    syncKeys()
                     store.start()
                 }
             } label: {
@@ -126,7 +185,7 @@ struct ContentView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(store.isLive ? .red : .accentColor)
-            .disabled(apiKey.isEmpty && !store.isLive)
+            .disabled(deepgramAPIKey.isEmpty && !store.isLive)
         }
         .padding(16)
         .background(Color(.secondarySystemBackground))
@@ -136,15 +195,24 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 Section {
-                    SecureField("Deepgram API key", text: $apiKey)
+                    SecureField("Deepgram API key", text: $deepgramAPIKey)
                         .textContentType(.password)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("Stored in UserDefaults on this device. Sent only as the Deepgram Authorization header.")
+                    Text("From console.deepgram.com — used for live streaming transcription.")
+                }
+
+                Section {
+                    SecureField("OpenAI API key", text: $openAIAPIKey)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                } footer: {
+                    Text("From platform.openai.com → API keys. Used only for the end-of-meeting summary (gpt-4o-mini). Create a key, enable billing if needed, and paste it here.")
                 }
             }
-            .navigationTitle("API Key")
+            .navigationTitle("API Keys")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -152,11 +220,10 @@ struct ContentView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 
-/// Thin wrapper around ReplayKit's broadcast activity picker.
 struct BroadcastPicker: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
         let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))

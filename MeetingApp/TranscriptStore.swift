@@ -26,17 +26,23 @@ final class TranscriptStore: ObservableObject {
     @Published var broadcastLive = false
     @Published var extensionStats: ExtensionStats?
 
+    @Published var summaryMarkdown: String = ""
+    @Published var isSummarizing = false
+    @Published var summaryError: String?
+
     private let watcher = ChunkWatcher()
     private let backgroundAudio = BackgroundAudioKeeper()
     private var deepgram: DeepgramClient?
     private var interimIDs: [DeepgramClient.Speaker: UUID] = [:]
     private var statusCancellable: AnyCancellable?
     private var statsCancellable: AnyCancellable?
+    private var wasBroadcastLive = false
 
-    var apiKey: String = ""
+    var deepgramAPIKey: String = ""
+    var openAIAPIKey: String = ""
 
     func start() {
-        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard !deepgramAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             status = "Set your Deepgram API key first"
             return
         }
@@ -52,8 +58,11 @@ final class TranscriptStore: ObservableObject {
         messages.removeAll()
         interimIDs.removeAll()
         chunksSent = 0
+        summaryMarkdown = ""
+        summaryError = nil
+        wasBroadcastLive = false
 
-        let client = DeepgramClient(apiKey: apiKey)
+        let client = DeepgramClient(apiKey: deepgramAPIKey)
         client.onStatus = { [weak self] s in
             Task { @MainActor in self?.refreshStatus(deepgram: s) }
         }
@@ -69,8 +78,14 @@ final class TranscriptStore: ObservableObject {
         statusCancellable = watcher.$broadcastLive
             .receive(on: DispatchQueue.main)
             .sink { [weak self] live in
-                self?.broadcastLive = live
-                self?.refreshStatus()
+                guard let self else { return }
+                let ended = self.wasBroadcastLive && !live
+                self.wasBroadcastLive = live
+                self.broadcastLive = live
+                self.refreshStatus()
+                if ended {
+                    self.requestSummary(reason: "Broadcast ended")
+                }
             }
 
         statsCancellable = watcher.$extensionStats
@@ -104,6 +119,43 @@ final class TranscriptStore: ObservableObject {
         broadcastLive = false
         extensionStats = nil
         status = "Stopped"
+        requestSummary(reason: "Listen stopped")
+    }
+
+    func requestSummary(reason: String) {
+        guard !isSummarizing else { return }
+        let finals = messages.filter(\.isFinal)
+        guard !finals.isEmpty else {
+            summaryError = "No final transcript yet (\(reason))"
+            return
+        }
+        guard !openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            summaryError = "Set your OpenAI API key to generate a summary"
+            return
+        }
+
+        let transcript = finals.map { msg in
+            let who = msg.speaker == .us ? "Us" : "Them"
+            return "\(who): \(msg.text)"
+        }.joined(separator: "\n")
+
+        isSummarizing = true
+        summaryError = nil
+        status = "Summarizing…"
+
+        let key = openAIAPIKey
+        Task {
+            do {
+                let client = OpenAIClient(apiKey: key)
+                let markdown = try await client.summarizeMeeting(transcript: transcript)
+                summaryMarkdown = markdown
+                status = "Summary ready"
+            } catch {
+                summaryError = error.localizedDescription
+                status = "Summary failed"
+            }
+            isSummarizing = false
+        }
     }
 
     private func refreshStatus(deepgram: String? = nil) {
@@ -128,7 +180,6 @@ final class TranscriptStore: ObservableObject {
 
     private func ingest(_ event: DeepgramClient.TranscriptEvent) {
         if event.isFinal {
-            // Replace any interim bubble for this speaker, or append.
             if let interimID = interimIDs[event.speaker],
                let idx = messages.firstIndex(where: { $0.id == interimID }) {
                 messages[idx].text = event.text
@@ -138,7 +189,6 @@ final class TranscriptStore: ObservableObject {
                 messages.append(ChatMessage(speaker: event.speaker, text: event.text, isFinal: true))
             }
         } else {
-            // Update or create interim bubble.
             if let interimID = interimIDs[event.speaker],
                let idx = messages.firstIndex(where: { $0.id == interimID }) {
                 messages[idx].text = event.text
