@@ -130,14 +130,11 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     }
                 } else {
-                    Text(LocalizedStringKey(store.summaryMarkdown))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    if store.summaryError != nil {
-                        Button("Regenerate") {
-                            store.requestSummary(reason: "Regenerate")
-                        }
-                        .buttonStyle(.bordered)
+                    MeetingNotesView(markdown: store.summaryMarkdown)
+                    Button("Regenerate") {
+                        store.requestSummary(reason: "Regenerate")
                     }
+                    .buttonStyle(.bordered)
                 }
             }
             .padding(16)
