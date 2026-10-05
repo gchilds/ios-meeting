@@ -84,6 +84,13 @@ final class ChunkWatcher: ObservableObject {
         guard let directory, let onChunk else { return }
         let fm = FileManager.default
 
+        // If Listen starts after Broadcast, the extension may already be past seq 0
+        // (e.g. diagnostic silence chunk was cleared). Skip gaps to the next file.
+        if !fm.fileExists(atPath: AudioConstants.chunkURL(in: directory, sequence: nextSequence).path),
+           let lowest = lowestExistingSequence(in: directory, atLeast: nextSequence) {
+            nextSequence = lowest
+        }
+
         while true {
             let url = AudioConstants.chunkURL(in: directory, sequence: nextSequence)
             guard fm.fileExists(atPath: url.path) else { break }
@@ -107,5 +114,15 @@ final class ChunkWatcher: ObservableObject {
                 break
             }
         }
+    }
+
+    private func lowestExistingSequence(in directory: URL, atLeast minimum: UInt64) -> UInt64? {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+            return nil
+        }
+        return files
+            .compactMap { AudioConstants.parseSequence(from: $0.lastPathComponent) }
+            .filter { $0 >= minimum }
+            .min()
     }
 }
