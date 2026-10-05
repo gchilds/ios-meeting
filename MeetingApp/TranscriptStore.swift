@@ -27,6 +27,7 @@ final class TranscriptStore: ObservableObject {
     @Published var extensionStats: ExtensionStats?
 
     private let watcher = ChunkWatcher()
+    private let backgroundAudio = BackgroundAudioKeeper()
     private var deepgram: DeepgramClient?
     private var interimIDs: [DeepgramClient.Speaker: UUID] = [:]
     private var statusCancellable: AnyCancellable?
@@ -37,6 +38,13 @@ final class TranscriptStore: ObservableObject {
     func start() {
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             status = "Set your Deepgram API key first"
+            return
+        }
+
+        do {
+            try backgroundAudio.start()
+        } catch {
+            status = "Audio session failed: \(error.localizedDescription)"
             return
         }
 
@@ -91,6 +99,7 @@ final class TranscriptStore: ObservableObject {
         watcher.stop()
         deepgram?.disconnect()
         deepgram = nil
+        backgroundAudio.stop()
         isLive = false
         broadcastLive = false
         extensionStats = nil

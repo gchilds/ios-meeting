@@ -18,6 +18,7 @@
 		86204BA1D3F95D732341DCE4 /* BroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 75132BCD89B6E90857870993 /* BroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		961388CAC72C2E23D80745C5 /* BroadcastSetupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04A512ACE739B352FA8D75B /* BroadcastSetupViewController.swift */; };
 		9B75E6E37AE498394E96F5EB /* AudioConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */; };
+		A8221039C223F8A00A95631D /* BackgroundAudioKeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */; };
 		A8FF3AA2560E515EC9B51E28 /* AudioConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */; };
 		AA2F18E2F55639F3514625F5 /* DeepgramClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43C3B600D51DC774EB603DC /* DeepgramClient.swift */; };
 		BDB97D97EC404CD3D5AA1CA4 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */; };
@@ -62,6 +63,7 @@
 
 /* Begin PBXFileReference section */
 		05D69928A178913D24EAFDCA /* ExtensionStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStats.swift; sourceTree = "<group>"; };
+		07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundAudioKeeper.swift; sourceTree = "<group>"; };
 		18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoAligner.swift; sourceTree = "<group>"; };
 		1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptStore.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 		A8E3B8027DDEAE6D7C5AC35C /* MeetingApp */ = {
 			isa = PBXGroup;
 			children = (
+				07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */,
 				E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */,
 				2EDCB623F5770A73E3856DAF /* ChunkWatcher.swift */,
 				BE3F0F839157AE802C749480 /* ContentView.swift */,
@@ -262,6 +265,7 @@
 			files = (
 				BDB97D97EC404CD3D5AA1CA4 /* AppGroup.swift in Sources */,
 				9B75E6E37AE498394E96F5EB /* AudioConstants.swift in Sources */,
+				A8221039C223F8A00A95631D /* BackgroundAudioKeeper.swift in Sources */,
 				842EA58C29454BEB2A2C68A0 /* ChatBubbleView.swift in Sources */,
 				247D1FA669F0AF6A45404569 /* ChunkWatcher.swift in Sources */,
 				26A59722B9DEDDD3745E255A /* ContentView.swift in Sources */,
