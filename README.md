@@ -100,4 +100,4 @@ Channel `0` → Us · Channel `1` → Them.
 - App Groups require a paid Apple Developer account for device installs.
 - System audio (`audioApp`) is whatever ReplayKit delivers for the broadcast — typically device audio mixed for the screen recording session.
 - Mic and system clocks can skew; the aligner zero-pads when one side leads by >100 ms.
-- Bundle IDs default to `com.granola.ios-meeting` — change them in `project.yml` + entitlements if needed, and keep the App Group ID in sync with `AudioConstants.appGroupID`.
+- Bundle IDs default to `com.granola.iosmeeting` / `com.granola.iosmeeting.BroadcastExtension` — change them in `project.yml` if needed, and keep the App Group ID in sync with `AudioConstants.appGroupID`.

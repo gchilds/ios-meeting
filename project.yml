@@ -12,7 +12,7 @@ settings:
     SWIFT_VERSION: "5.9"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
-    DEVELOPMENT_TEAM: "" # set your team in Xcode
+    DEVELOPMENT_TEAM: VWF5KE52Z7
     CODE_SIGN_STYLE: Automatic
 
 targets:
@@ -24,7 +24,7 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.granola.ios-meeting
+        PRODUCT_BUNDLE_IDENTIFIER: com.granola.iosmeeting
         INFOPLIST_FILE: MeetingApp/Info.plist
         CODE_SIGN_ENTITLEMENTS: MeetingApp/MeetingApp.entitlements
         PRODUCT_NAME: MeetingApp
@@ -49,11 +49,12 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.granola.ios-meeting.BroadcastExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.granola.iosmeeting.BroadcastExtension
         INFOPLIST_FILE: BroadcastExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: BroadcastExtension/BroadcastExtension.entitlements
         PRODUCT_NAME: BroadcastExtension
-        GENERATE_INFOPLIST_FILE: false
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: Meeting Audio
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
         SKIP_INSTALL: true
         CURRENT_PROJECT_VERSION: 1
@@ -66,9 +67,9 @@ schemes:
     build:
       targets:
         MeetingApp: all
-        BroadcastExtension: all
     run:
       config: Debug
-      askForAppToLaunch: true
+    profile:
+      config: Release
     archive:
       config: Release

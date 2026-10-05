@@ -160,7 +160,7 @@ struct ContentView: View {
 struct BroadcastPicker: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
         let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
-        picker.preferredExtension = "com.granola.ios-meeting.BroadcastExtension"
+        picker.preferredExtension = "com.granola.iosmeeting.BroadcastExtension"
         picker.showsMicrophoneButton = true
         return picker
     }
