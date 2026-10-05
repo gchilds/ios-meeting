@@ -12,6 +12,7 @@
 		26A59722B9DEDDD3745E255A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE3F0F839157AE802C749480 /* ContentView.swift */; };
 		34BC51AD85B30E064146386E /* BroadcastSetupUI.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7ED46395C0C56EC7BE7E6B /* MeetingAppApp.swift */; };
+		6119AC073A32F9F4AF74E294 /* ExtensionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D69928A178913D24EAFDCA /* ExtensionStats.swift */; };
 		686E27320FD9457D92341ACF /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C94551A561BCEDAC29494B42 /* SampleHandler.swift */; };
 		842EA58C29454BEB2A2C68A0 /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */; };
 		86204BA1D3F95D732341DCE4 /* BroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 75132BCD89B6E90857870993 /* BroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -23,6 +24,7 @@
 		DB63D9A7149416449C687A81 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */; };
 		DB7603D8C736BBD69625B938 /* StereoAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */; };
 		ED0B5A5C0E12FEFB59A3E3BC /* TranscriptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */; };
+		EDE5B05AEEA2D847C1D3D9C1 /* ExtensionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D69928A178913D24EAFDCA /* ExtensionStats.swift */; };
 		F1DB114F93E8ABF1D3F93537 /* AudioResampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E52F1511B5879EA80F3802 /* AudioResampler.swift */; };
 /* End PBXBuildFile section */
 
@@ -59,6 +61,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		05D69928A178913D24EAFDCA /* ExtensionStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStats.swift; sourceTree = "<group>"; };
 		18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoAligner.swift; sourceTree = "<group>"; };
 		1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptStore.swift; sourceTree = "<group>"; };
@@ -88,6 +91,7 @@
 			children = (
 				1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */,
 				B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */,
+				05D69928A178913D24EAFDCA /* ExtensionStats.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -262,6 +266,7 @@
 				247D1FA669F0AF6A45404569 /* ChunkWatcher.swift in Sources */,
 				26A59722B9DEDDD3745E255A /* ContentView.swift in Sources */,
 				AA2F18E2F55639F3514625F5 /* DeepgramClient.swift in Sources */,
+				6119AC073A32F9F4AF74E294 /* ExtensionStats.swift in Sources */,
 				5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */,
 				ED0B5A5C0E12FEFB59A3E3BC /* TranscriptStore.swift in Sources */,
 			);
@@ -283,6 +288,7 @@
 				A8FF3AA2560E515EC9B51E28 /* AudioConstants.swift in Sources */,
 				F1DB114F93E8ABF1D3F93537 /* AudioResampler.swift in Sources */,
 				09FDF9A345E7CB6964FF7145 /* ChunkWriter.swift in Sources */,
+				EDE5B05AEEA2D847C1D3D9C1 /* ExtensionStats.swift in Sources */,
 				686E27320FD9457D92341ACF /* SampleHandler.swift in Sources */,
 				DB7603D8C736BBD69625B938 /* StereoAligner.swift in Sources */,
 			);

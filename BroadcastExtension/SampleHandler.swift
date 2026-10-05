@@ -10,13 +10,10 @@ class SampleHandler: RPBroadcastSampleHandler {
     private let systemResampler = AudioResampler()
     private let aligner = StereoAligner()
     private var chunkWriter: ChunkWriter?
-    private let processQueue = DispatchQueue(label: "com.granola.iosmeeting.audio", qos: .userInitiated)
-    private var micBuffers = 0
-    private var systemBuffers = 0
-    private var resampleFailures = 0
+    private var stats = ExtensionStats()
+    private var directory: URL?
 
     override func broadcastStarted(withSetupInfo setupInfo: [String: NSObject]?) {
-        // Don't clear here if the app is already listening — just ensure the dir exists.
         guard let dir = AppGroup.ensureChunksDirectory() else {
             finishBroadcastWithError(NSError(
                 domain: "MeetingBroadcast",
@@ -25,60 +22,67 @@ class SampleHandler: RPBroadcastSampleHandler {
             ))
             return
         }
-        // Write a sentinel so the host app can confirm the extension launched.
+        directory = dir
+
         let sentinel = dir.appendingPathComponent("_broadcast_live")
         try? "\(Date().timeIntervalSince1970)".write(to: sentinel, atomically: true, encoding: .utf8)
 
-        chunkWriter = ChunkWriter(directory: dir)
-        micBuffers = 0
-        systemBuffers = 0
-        resampleFailures = 0
+        let writer = ChunkWriter(directory: dir)
+        chunkWriter = writer
+
+        // Prove the write path works even before any audio arrives.
+        let silence = [Int16](repeating: 0, count: AudioConstants.framesPerChunk * AudioConstants.channels)
+        writer.append(interleavedStereo: silence)
+        stats.chunksWritten = 1
+        stats.lastError = "started"
+        stats.write(to: dir)
+
         NSLog("[SampleHandler] broadcast started → %@", dir.path)
     }
 
     override func broadcastPaused() {
-        NSLog("[SampleHandler] paused")
+        stats.lastError = "paused"
+        if let directory { stats.write(to: directory) }
     }
 
     override func broadcastResumed() {
-        NSLog("[SampleHandler] resumed")
+        stats.lastError = "resumed"
+        if let directory { stats.write(to: directory) }
     }
 
     override func broadcastFinished() {
-        processQueue.sync {
-            let drained = aligner.drainWithSilencePadding()
+        let drained = aligner.drainWithSilencePadding()
+        if !drained.isEmpty {
             chunkWriter?.append(interleavedStereo: drained)
-            chunkWriter?.flush()
-            chunkWriter = nil
-            aligner.reset()
+            stats.chunksWritten = (chunkWriter?.sequenceValue ?? stats.chunksWritten)
         }
-        if let dir = AppGroup.chunksDirectoryURL {
-            try? FileManager.default.removeItem(at: dir.appendingPathComponent("_broadcast_live"))
+        chunkWriter?.flush()
+        stats.chunksWritten = chunkWriter?.sequenceValue ?? stats.chunksWritten
+        stats.lastError = "finished"
+        if let directory {
+            stats.write(to: directory)
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent("_broadcast_live"))
         }
-        NSLog("[SampleHandler] finished mic=%d sys=%d fail=%d", micBuffers, systemBuffers, resampleFailures)
+        chunkWriter = nil
+        aligner.reset()
+        NSLog("[SampleHandler] finished %@", stats.summary)
     }
 
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
+        // Process on the ReplayKit thread: buffers are only valid here.
         switch sampleBufferType {
         case .video:
-            return // discard video
+            stats.videoBuffers += 1
+            maybeFlushStats()
+            return
 
-        case .audioMic, .audioApp:
-            // ReplayKit buffers are only valid during this callback — copy before async work.
-            var copied: CMSampleBuffer?
-            let status = CMSampleBufferCreateCopy(
-                allocator: kCFAllocatorDefault,
-                sampleBuffer: sampleBuffer,
-                sampleBufferOut: &copied
-            )
-            guard status == noErr, let copied else {
-                NSLog("[SampleHandler] CMSampleBufferCreateCopy failed: %d", status)
-                return
-            }
-            let side: Side = (sampleBufferType == .audioMic) ? .mic : .system
-            processQueue.async { [weak self] in
-                self?.ingest(copied, side: side)
-            }
+        case .audioMic:
+            stats.micBuffers += 1
+            ingest(sampleBuffer, side: .mic)
+
+        case .audioApp:
+            stats.systemBuffers += 1
+            ingest(sampleBuffer, side: .system)
 
         @unknown default:
             return
@@ -88,17 +92,15 @@ class SampleHandler: RPBroadcastSampleHandler {
     private enum Side { case mic, system }
 
     private func ingest(_ sampleBuffer: CMSampleBuffer, side: Side) {
-        switch side {
-        case .mic:    micBuffers += 1
-        case .system: systemBuffers += 1
-        }
-
         let resampler = (side == .mic) ? micResampler : systemResampler
         guard let mono = resampler.resample(sampleBuffer) else {
-            resampleFailures += 1
-            if resampleFailures <= 5 || resampleFailures % 50 == 0 {
-                NSLog("[SampleHandler] resample failed (%d) side=%@", resampleFailures, side == .mic ? "mic" : "sys")
+            stats.resampleFailures += 1
+            if let asbd = sampleBufferFormatSummary(sampleBuffer) {
+                stats.lastError = "resample fail: \(asbd)"
+            } else {
+                stats.lastError = "resample fail (no format)"
             }
+            maybeFlushStats()
             return
         }
 
@@ -107,10 +109,32 @@ class SampleHandler: RPBroadcastSampleHandler {
         case .system: aligner.appendSystem(mono)
         }
 
-        // Pad the lagging channel after ~32 ms so a single source still produces chunks.
         let stereo = aligner.pullAlignedFrames(maxSkewFrames: AudioConstants.framesPerChunk)
         if !stereo.isEmpty {
             chunkWriter?.append(interleavedStereo: stereo)
+            stats.chunksWritten = chunkWriter?.sequenceValue ?? stats.chunksWritten
+            stats.framesEmitted += stereo.count / 2
         }
+        maybeFlushStats()
+    }
+
+    private var statsCounter = 0
+    private func maybeFlushStats() {
+        statsCounter += 1
+        guard statsCounter == 1 || statsCounter % 30 == 0, let directory else { return }
+        stats.write(to: directory)
+    }
+
+    private func sampleBufferFormatSummary(_ sampleBuffer: CMSampleBuffer) -> String? {
+        guard let formatDesc = CMSampleBufferGetFormatDescription(sampleBuffer),
+              let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc)?.pointee else {
+            return nil
+        }
+        return String(format: "%.0fHz ch=%u bits=%u flags=0x%08x frames=%d",
+                      asbd.mSampleRate,
+                      asbd.mChannelsPerFrame,
+                      asbd.mBitsPerChannel,
+                      asbd.mFormatFlags,
+                      CMSampleBufferGetNumSamples(sampleBuffer))
     }
 }

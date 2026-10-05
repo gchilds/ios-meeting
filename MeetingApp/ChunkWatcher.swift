@@ -4,12 +4,12 @@ import Combine
 /// Watches the App Group chunks directory for new 512-frame PCM files
 /// and publishes their raw Data in sequence order.
 ///
-/// Uses polling rather than DispatchSource — kqueue/FSEvents notifications
-/// often do not cross process boundaries for App Group containers.
+/// Uses polling — kqueue/FSEvents often do not cross App Group processes.
 final class ChunkWatcher: ObservableObject {
     @Published private(set) var isWatching = false
     @Published private(set) var chunksDelivered: UInt64 = 0
     @Published private(set) var broadcastLive = false
+    @Published private(set) var extensionStats: ExtensionStats?
 
     private var directory: URL?
     private var nextSequence: UInt64 = 0
@@ -27,6 +27,9 @@ final class ChunkWatcher: ObservableObject {
         self.onChunk = onChunk
         nextSequence = 0
 
+        // Catch up to whatever sequence already exists on disk.
+        nextSequence = highestExistingSequence(in: dir).map { $0 + 1 } ?? 0
+
         DispatchQueue.main.async { [weak self] in
             self?.chunksDelivered = 0
             self?.isWatching = true
@@ -40,7 +43,7 @@ final class ChunkWatcher: ObservableObject {
         timer.resume()
         pollTimer = timer
 
-        NSLog("[ChunkWatcher] polling %@", dir.path)
+        NSLog("[ChunkWatcher] polling %@ from seq %llu", dir.path, nextSequence)
     }
 
     func stop() {
@@ -60,11 +63,21 @@ final class ChunkWatcher: ObservableObject {
         let live = FileManager.default.fileExists(
             atPath: directory.appendingPathComponent("_broadcast_live").path
         )
+        let stats = ExtensionStats.read(from: directory)
+
         DispatchQueue.main.async { [weak self] in
             self?.broadcastLive = live
+            self?.extensionStats = stats
         }
 
         drainAvailableChunks()
+    }
+
+    private func highestExistingSequence(in directory: URL) -> UInt64? {
+        guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+            return nil
+        }
+        return files.compactMap { AudioConstants.parseSequence(from: $0.lastPathComponent) }.max()
     }
 
     private func drainAvailableChunks() {

@@ -52,6 +52,13 @@ final class ChunkWriter {
         lock.unlock()
     }
 
+    /// Current write sequence (number of chunks already written).
+    var sequenceValue: UInt64 {
+        lock.lock()
+        defer { lock.unlock() }
+        return sequence
+    }
+
     private func writeChunk(_ samples: [Int16]) {
         let url = AudioConstants.chunkURL(in: directory, sequence: sequence)
         sequence += 1
