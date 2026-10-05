@@ -3,20 +3,24 @@ import Combine
 
 /// Watches the App Group chunks directory for new 512-frame PCM files
 /// and publishes their raw Data in sequence order.
+///
+/// Uses polling rather than DispatchSource — kqueue/FSEvents notifications
+/// often do not cross process boundaries for App Group containers.
 final class ChunkWatcher: ObservableObject {
     @Published private(set) var isWatching = false
     @Published private(set) var chunksDelivered: UInt64 = 0
+    @Published private(set) var broadcastLive = false
 
-    private var source: DispatchSourceFileSystemObject?
     private var directory: URL?
     private var nextSequence: UInt64 = 0
     private var onChunk: ((Data) -> Void)?
-    private let ioQueue = DispatchQueue(label: "com.granola.ios-meeting.chunk-watcher")
+    private var pollTimer: DispatchSourceTimer?
+    private let ioQueue = DispatchQueue(label: "com.granola.iosmeeting.chunk-watcher")
 
     func start(onChunk: @escaping (Data) -> Void) {
         stop()
         guard let dir = AppGroup.ensureChunksDirectory() else {
-            NSLog("[ChunkWatcher] App Group unavailable")
+            NSLog("[ChunkWatcher] App Group unavailable — enable group.com.granola.ios-meeting on both targets")
             return
         }
         directory = dir
@@ -28,36 +32,39 @@ final class ChunkWatcher: ObservableObject {
             self?.isWatching = true
         }
 
-        let fd = open(dir.path, O_EVTONLY)
-        guard fd >= 0 else {
-            NSLog("[ChunkWatcher] failed to open %@", dir.path)
-            return
+        let timer = DispatchSource.makeTimerSource(queue: ioQueue)
+        timer.schedule(deadline: .now(), repeating: .milliseconds(50), leeway: .milliseconds(10))
+        timer.setEventHandler { [weak self] in
+            self?.tick()
         }
+        timer.resume()
+        pollTimer = timer
 
-        let src = DispatchSource.makeFileSystemObjectSource(
-            fileDescriptor: fd,
-            eventMask: [.write, .rename, .extend],
-            queue: ioQueue
-        )
-        src.setEventHandler { [weak self] in
-            self?.drainAvailableChunks()
-        }
-        src.setCancelHandler { close(fd) }
-        src.resume()
-        source = src
-
-        ioQueue.async { [weak self] in self?.drainAvailableChunks() }
-        NSLog("[ChunkWatcher] watching %@", dir.path)
+        NSLog("[ChunkWatcher] polling %@", dir.path)
     }
 
     func stop() {
-        source?.cancel()
-        source = nil
+        pollTimer?.cancel()
+        pollTimer = nil
         onChunk = nil
         directory = nil
         DispatchQueue.main.async { [weak self] in
             self?.isWatching = false
+            self?.broadcastLive = false
         }
+    }
+
+    private func tick() {
+        guard let directory else { return }
+
+        let live = FileManager.default.fileExists(
+            atPath: directory.appendingPathComponent("_broadcast_live").path
+        )
+        DispatchQueue.main.async { [weak self] in
+            self?.broadcastLive = live
+        }
+
+        drainAvailableChunks()
     }
 
     private func drainAvailableChunks() {

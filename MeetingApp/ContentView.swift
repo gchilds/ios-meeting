@@ -43,7 +43,7 @@ struct ContentView: View {
     private var statusBar: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(store.isLive ? Color.green : Color.secondary.opacity(0.4))
+                .fill(store.broadcastLive ? Color.green : (store.isLive ? Color.orange : Color.secondary.opacity(0.4)))
                 .frame(width: 8, height: 8)
             Text(store.status)
                 .font(.caption)

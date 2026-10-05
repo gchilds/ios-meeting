@@ -23,10 +23,12 @@ final class TranscriptStore: ObservableObject {
     @Published var status: String = "Idle"
     @Published var isLive = false
     @Published var chunksSent: UInt64 = 0
+    @Published var broadcastLive = false
 
     private let watcher = ChunkWatcher()
     private var deepgram: DeepgramClient?
     private var interimIDs: [DeepgramClient.Speaker: UUID] = [:]
+    private var statusCancellable: AnyCancellable?
 
     var apiKey: String = ""
 
@@ -43,7 +45,7 @@ final class TranscriptStore: ObservableObject {
 
         let client = DeepgramClient(apiKey: apiKey)
         client.onStatus = { [weak self] s in
-            Task { @MainActor in self?.status = s }
+            Task { @MainActor in self?.refreshStatus(deepgram: s) }
         }
         client.onError = { [weak self] err in
             Task { @MainActor in self?.status = "Error: \(err.localizedDescription)" }
@@ -54,6 +56,13 @@ final class TranscriptStore: ObservableObject {
         client.connect()
         deepgram = client
 
+        statusCancellable = watcher.$broadcastLive
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] live in
+                self?.broadcastLive = live
+                self?.refreshStatus()
+            }
+
         watcher.start { [weak self] data in
             Task { @MainActor in
                 self?.deepgram?.send(pcmChunk: data)
@@ -62,15 +71,28 @@ final class TranscriptStore: ObservableObject {
         }
 
         isLive = true
-        status = "Listening for broadcast chunks…"
+        refreshStatus(deepgram: "Connecting…")
     }
 
     func stop() {
+        statusCancellable?.cancel()
+        statusCancellable = nil
         watcher.stop()
         deepgram?.disconnect()
         deepgram = nil
         isLive = false
+        broadcastLive = false
         status = "Stopped"
+    }
+
+    private func refreshStatus(deepgram: String? = nil) {
+        let dg = deepgram ?? status
+        if !isLive { return }
+        if broadcastLive {
+            status = "Broadcast live · \(dg)"
+        } else {
+            status = "Waiting for broadcast… · \(dg)"
+        }
     }
 
     private func ingest(_ event: DeepgramClient.TranscriptEvent) {

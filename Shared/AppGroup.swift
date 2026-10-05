@@ -18,9 +18,13 @@ enum AppGroup {
         return dir
     }
 
+    /// Removes only PCM chunk files — keeps the directory and any live sentinel.
     static func clearChunks() {
-        guard let dir = chunksDirectoryURL else { return }
-        try? FileManager.default.removeItem(at: dir)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        guard let dir = ensureChunksDirectory() else { return }
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
+        for url in files where url.pathExtension == AudioConstants.chunkFilenameExtension {
+            try? fm.removeItem(at: url)
+        }
     }
 }
