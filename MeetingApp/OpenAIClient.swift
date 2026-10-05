@@ -12,7 +12,11 @@ final class OpenAIClient {
             switch self {
             case .missingKey: return "Set your OpenAI API key first"
             case .emptyTranscript: return "No transcript to summarize"
-            case .badStatus(let code, let body): return "OpenAI HTTP \(code): \(body)"
+            case .badStatus(let code, let body):
+                if code == 401 {
+                    return "OpenAI 401 — check the OpenAI key (must start with sk-…). Don’t put the Deepgram key here. \(body)"
+                }
+                return "OpenAI HTTP \(code): \(body)"
             case .noContent: return "OpenAI returned an empty summary"
             }
         }
@@ -22,19 +26,18 @@ final class OpenAIClient {
     private let model: String
 
     init(apiKey: String, model: String = "gpt-4o-mini") {
-        self.apiKey = apiKey
+        self.apiKey = Self.sanitize(apiKey)
         self.model = model
     }
 
     func summarizeMeeting(transcript: String) async throws -> String {
-        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else { throw ClientError.missingKey }
+        guard !apiKey.isEmpty else { throw ClientError.missingKey }
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw ClientError.emptyTranscript }
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = [
@@ -78,5 +81,14 @@ final class OpenAIClient {
             throw ClientError.noContent
         }
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Trim whitespace and strip an accidental "Bearer " prefix from paste.
+    static func sanitize(_ raw: String) -> String {
+        var key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if key.lowercased().hasPrefix("bearer ") {
+            key = String(key.dropFirst(7)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return key
     }
 }

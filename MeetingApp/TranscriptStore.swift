@@ -146,7 +146,14 @@ final class TranscriptStore: ObservableObject {
         let key = openAIAPIKey
         Task {
             do {
-                let client = OpenAIClient(apiKey: key)
+                let sanitized = OpenAIClient.sanitize(key)
+                if !sanitized.hasPrefix("sk-") {
+                    summaryError = "OpenAI key should start with sk-… (got \(sanitized.prefix(6))…). Keys may be swapped?"
+                    isSummarizing = false
+                    status = "Summary failed"
+                    return
+                }
+                let client = OpenAIClient(apiKey: sanitized)
                 let markdown = try await client.summarizeMeeting(transcript: transcript)
                 summaryMarkdown = markdown
                 status = "Summary ready"

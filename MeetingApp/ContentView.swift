@@ -209,7 +209,7 @@ struct ContentView: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("From platform.openai.com → API keys. Used only for the end-of-meeting summary (gpt-4o-mini). Create a key, enable billing if needed, and paste it here.")
+                    Text("From platform.openai.com → API keys. Must start with sk- (not the Deepgram key). Paste the raw key only — no “Bearer”. Needs billing enabled on the OpenAI project.")
                 }
             }
             .navigationTitle("API Keys")

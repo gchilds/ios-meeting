@@ -26,7 +26,11 @@ final class DeepgramClient: NSObject {
     private let apiKey: String
 
     init(apiKey: String) {
-        self.apiKey = apiKey
+        var key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if key.lowercased().hasPrefix("token ") {
+            key = String(key.dropFirst(6)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        self.apiKey = key
         super.init()
     }
 
