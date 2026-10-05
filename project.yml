@@ -1,0 +1,74 @@
+name: MeetingApp
+options:
+  bundleIdPrefix: com.granola
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    DEVELOPMENT_TEAM: "" # set your team in Xcode
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  MeetingApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: MeetingApp
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.granola.ios-meeting
+        INFOPLIST_FILE: MeetingApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: MeetingApp/MeetingApp.entitlements
+        PRODUCT_NAME: MeetingApp
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Microphone audio is captured by the broadcast extension for meeting transcription."
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_CFBundleDisplayName: Meeting
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0"
+    dependencies:
+      - target: BroadcastExtension
+        embed: true
+    entitlements:
+      path: MeetingApp/MeetingApp.entitlements
+
+  BroadcastExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BroadcastExtension
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.granola.ios-meeting.BroadcastExtension
+        INFOPLIST_FILE: BroadcastExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: BroadcastExtension/BroadcastExtension.entitlements
+        PRODUCT_NAME: BroadcastExtension
+        GENERATE_INFOPLIST_FILE: false
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0"
+    entitlements:
+      path: BroadcastExtension/BroadcastExtension.entitlements
+
+schemes:
+  MeetingApp:
+    build:
+      targets:
+        MeetingApp: all
+        BroadcastExtension: all
+    run:
+      config: Debug
+      askForAppToLaunch: true
+    archive:
+      config: Release
