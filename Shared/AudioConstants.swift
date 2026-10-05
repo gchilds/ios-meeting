@@ -19,6 +19,11 @@ enum AudioConstants {
     static let chunkFilenamePrefix = "chunk_"
     static let chunkFilenameExtension = "pcm"
 
+    /// Present while the extension is capturing; removed after the final chunk is written.
+    static let liveSentinelName = "_broadcast_live"
+    /// Written by the app to ask the extension to finish the broadcast.
+    static let stopRequestName = "_stop_requested"
+
     static func chunkURL(in directory: URL, sequence: UInt64) -> URL {
         let name = String(format: "%@%08llu.%@", chunkFilenamePrefix, sequence, chunkFilenameExtension)
         return directory.appendingPathComponent(name)

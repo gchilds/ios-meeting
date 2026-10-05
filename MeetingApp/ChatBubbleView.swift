@@ -10,7 +10,7 @@ struct ChatBubbleView: View {
             if isMe { Spacer(minLength: 48) }
 
             VStack(alignment: isMe ? .trailing : .leading, spacing: 4) {
-                Text(isMe ? "Me" : "Them")
+                Text(message.speaker.displayName)
                     .font(.caption2.weight(.semibold))
                     .textCase(.uppercase)
                     .tracking(0.6)

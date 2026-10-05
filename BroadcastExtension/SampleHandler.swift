@@ -24,7 +24,8 @@ class SampleHandler: RPBroadcastSampleHandler {
         }
         directory = dir
 
-        let sentinel = dir.appendingPathComponent("_broadcast_live")
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent(AudioConstants.stopRequestName))
+        let sentinel = dir.appendingPathComponent(AudioConstants.liveSentinelName)
         try? "\(Date().timeIntervalSince1970)".write(to: sentinel, atomically: true, encoding: .utf8)
 
         let writer = ChunkWriter(directory: dir)
@@ -51,24 +52,51 @@ class SampleHandler: RPBroadcastSampleHandler {
     }
 
     override func broadcastFinished() {
+        finalizeCapture()
+    }
+
+    /// Writes every remaining frame, then removes the live sentinel so the app
+    /// knows all chunks are on disk. Safe to call more than once.
+    private func finalizeCapture() {
+        guard let writer = chunkWriter else { return }
+        chunkWriter = nil
+
         let drained = aligner.drainWithSilencePadding()
         if !drained.isEmpty {
-            chunkWriter?.append(interleavedStereo: drained)
-            stats.chunksWritten = (chunkWriter?.sequenceValue ?? stats.chunksWritten)
+            writer.append(interleavedStereo: drained)
         }
-        chunkWriter?.flush()
-        stats.chunksWritten = chunkWriter?.sequenceValue ?? stats.chunksWritten
+        writer.flush()
+        stats.chunksWritten = writer.sequenceValue
         stats.lastError = "finished"
         if let directory {
             stats.write(to: directory)
-            try? FileManager.default.removeItem(at: directory.appendingPathComponent("_broadcast_live"))
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent(AudioConstants.stopRequestName))
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent(AudioConstants.liveSentinelName))
         }
-        chunkWriter = nil
         aligner.reset()
         NSLog("[SampleHandler] finished %@", stats.summary)
     }
 
+    private var lastStopCheck = Date.distantPast
+    private func stopRequested() -> Bool {
+        let now = Date()
+        guard now.timeIntervalSince(lastStopCheck) >= 0.25, let directory else { return false }
+        lastStopCheck = now
+        return FileManager.default.fileExists(atPath: directory.appendingPathComponent(AudioConstants.stopRequestName).path)
+    }
+
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
+        guard chunkWriter != nil else { return }
+        if stopRequested() {
+            finalizeCapture()
+            finishBroadcastWithError(NSError(
+                domain: "MeetingBroadcast",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Müsli finished capturing your meeting."]
+            ))
+            return
+        }
+
         // Process on the ReplayKit thread: buffers are only valid here.
         switch sampleBufferType {
         case .video:

@@ -48,7 +48,7 @@ final class OpenAIClient {
                     "role": "system",
                     "content": """
                     You write concise meeting notes from a dual-channel transcript.
-                    "Us" is the local participant (microphone). "Them" is remote/system audio.
+                    "Gordon" is the local participant (microphone). "Chris" is the remote participant (system audio).
                     Return markdown with:
                     ## Summary
                     ## Key points

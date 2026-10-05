@@ -17,31 +17,6 @@ enum MusliTheme {
     }
 }
 
-struct StatusDot: View {
-    let label: String
-    let value: String
-    let color: Color
-    var pulsing = false
-
-    var body: some View {
-        HStack(spacing: 6) {
-            TimelineView(.animation(paused: !pulsing)) { context in
-                let t = context.date.timeIntervalSinceReferenceDate
-                Circle()
-                    .fill(color)
-                    .frame(width: 7, height: 7)
-                    .opacity(pulsing ? 0.6 + 0.4 * cos(t * 4) : 1)
-            }
-            .frame(width: 7, height: 7)
-            Text(label)
-                .foregroundStyle(MusliTheme.inkMuted)
-            Text(value)
-                .foregroundStyle(MusliTheme.ink)
-        }
-        .font(.caption.weight(.medium))
-    }
-}
-
 struct SegmentedTabs: View {
     @Binding var selection: Int
     let titles: [String]
@@ -77,17 +52,15 @@ struct SegmentedTabs: View {
     }
 }
 
-struct MusliListenButtonStyle: ButtonStyle {
-    var isStop = false
-
+struct MusliStopButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(isStop ? MusliTheme.berry : .white)
+            .foregroundStyle(MusliTheme.berry)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(isStop ? MusliTheme.card : MusliTheme.ink, in: Capsule())
-            .overlay(Capsule().strokeBorder(isStop ? MusliTheme.berry.opacity(0.5) : .clear, lineWidth: 1.5))
+            .background(MusliTheme.card, in: Capsule())
+            .overlay(Capsule().strokeBorder(MusliTheme.berry.opacity(0.5), lineWidth: 1.5))
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }

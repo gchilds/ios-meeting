@@ -65,44 +65,11 @@ struct ContentView: View {
                 .accessibilityLabel("API keys")
             }
 
-            HStack(spacing: 18) {
-                StatusDot(
-                    label: "Extension",
-                    value: store.extensionStatus,
-                    color: extensionColor,
-                    pulsing: store.extensionStatus == "Recording"
-                )
-                StatusDot(
-                    label: "Deepgram",
-                    value: store.deepgramStatus,
-                    color: deepgramColor,
-                    pulsing: store.deepgramStatus == "Connecting"
-                )
-            }
-
             SegmentedTabs(selection: $selectedTab, titles: ["Transcript", "Notes"])
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 14)
-    }
-
-    private var extensionColor: Color {
-        switch store.extensionStatus {
-        case "Recording": return MusliTheme.leaf
-        case "Waiting": return MusliTheme.honey
-        case "Error": return MusliTheme.berry
-        default: return MusliTheme.inkMuted.opacity(0.4)
-        }
-    }
-
-    private var deepgramColor: Color {
-        switch store.deepgramStatus {
-        case "Connected": return MusliTheme.leaf
-        case "Connecting": return MusliTheme.honey
-        case "Error": return MusliTheme.berry
-        default: return MusliTheme.inkMuted.opacity(0.4)
-        }
     }
 
     // MARK: - Transcript
@@ -139,10 +106,16 @@ struct ContentView: View {
             Text("Nothing in the bowl yet")
                 .font(MusliTheme.title(22))
                 .foregroundStyle(MusliTheme.ink)
-            Text("Tap the bowl to start capturing, then Listen.\nYour mic is Me, system audio is Them.")
+            Text("Tap the bowl to start capturing.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(MusliTheme.inkMuted)
+            if let error = store.sessionError {
+                Text(error)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(MusliTheme.berry)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 72)
@@ -178,7 +151,7 @@ struct ContentView: View {
                             .padding(.top, 8)
                         regenerateButton(title: "Try again")
                     } else {
-                        Text("Notes appear here when the broadcast ends or you tap Stop.")
+                        Text("Notes appear here when the capture ends.")
                             .foregroundStyle(MusliTheme.inkMuted)
                             .padding(.top, 8)
                     }
@@ -225,20 +198,22 @@ struct ContentView: View {
 
             Spacer(minLength: 8)
 
-            Button {
-                if store.isLive {
+            if store.isStopping {
+                ProgressView()
+                    .tint(MusliTheme.leaf)
+                    .padding(.horizontal, 20)
+            } else if store.broadcastLive {
+                Button {
                     store.stop()
-                } else {
-                    syncKeys()
-                    store.start()
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
                 }
-            } label: {
-                Label(store.isLive ? "Stop" : "Listen", systemImage: store.isLive ? "stop.fill" : "waveform")
+                .buttonStyle(MusliStopButtonStyle())
+                .transition(.scale.combined(with: .opacity))
             }
-            .buttonStyle(MusliListenButtonStyle(isStop: store.isLive))
-            .disabled(deepgramAPIKey.isEmpty && !store.isLive)
-            .opacity(deepgramAPIKey.isEmpty && !store.isLive ? 0.4 : 1)
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: store.broadcastLive)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: store.isStopping)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background {
@@ -250,21 +225,16 @@ struct ContentView: View {
     }
 
     private var controlTitle: String {
-        switch (store.broadcastLive, store.isLive) {
-        case (true, true): return "Capturing & transcribing"
-        case (true, false): return "Capturing"
-        case (false, true): return "Listening"
-        case (false, false): return "Ready"
-        }
+        if store.isStopping { return "Wrapping up" }
+        return store.broadcastLive ? "Capturing & transcribing" : "Ready"
     }
 
     private var controlSubtitle: String {
-        switch (store.broadcastLive, store.isLive) {
-        case (true, true): return "Hop over to your call — Müsli's got it."
-        case (true, false): return "Tap Listen to start transcribing."
-        case (false, true): return "Tap the bowl to start capturing."
-        case (false, false): return "Tap the bowl to capture your meeting."
-        }
+        if store.isStopping { return "Catching the last few words…" }
+        if store.broadcastLive { return "Hop over to your call — Müsli's got it." }
+        return deepgramAPIKey.isEmpty
+            ? "Add your Deepgram key, then tap the bowl."
+            : "Tap the bowl to capture your meeting."
     }
 
     // MARK: - Keys

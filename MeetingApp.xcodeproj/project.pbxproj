@@ -30,6 +30,7 @@
 		DB7603D8C736BBD69625B938 /* StereoAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */; };
 		ED0B5A5C0E12FEFB59A3E3BC /* TranscriptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */; };
 		EDE5B05AEEA2D847C1D3D9C1 /* ExtensionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D69928A178913D24EAFDCA /* ExtensionStats.swift */; };
+		F0F223E046F1901FF81464E2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE2AD64C22A8DF7647DCC84D /* Assets.xcassets */; };
 		F1DB114F93E8ABF1D3F93537 /* AudioResampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E52F1511B5879EA80F3802 /* AudioResampler.swift */; };
 /* End PBXBuildFile section */
 
@@ -93,6 +94,7 @@
 		E43C3B600D51DC774EB603DC /* DeepgramClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramClient.swift; sourceTree = "<group>"; };
 		E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleView.swift; sourceTree = "<group>"; };
 		E7814DB05E1E3FA3F941FB1B /* ChunkWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkWriter.swift; sourceTree = "<group>"; };
+		FE2AD64C22A8DF7647DCC84D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -120,6 +122,7 @@
 		A8E3B8027DDEAE6D7C5AC35C /* MeetingApp */ = {
 			isa = PBXGroup;
 			children = (
+				FE2AD64C22A8DF7647DCC84D /* Assets.xcassets */,
 				07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */,
 				7FBB7EE1AA08D4A244A58766 /* BroadcastPickerView.swift */,
 				E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */,
@@ -194,6 +197,7 @@
 			buildConfigurationList = 0340C086056136758E9F952E /* Build configuration list for PBXNativeTarget "MeetingApp" */;
 			buildPhases = (
 				1BE3311B3818683B38328E55 /* Sources */,
+				6B2D409D912D266BF213AC43 /* Resources */,
 				46835760FA2D4AB84E6C0352 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -269,6 +273,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6B2D409D912D266BF213AC43 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0F223E046F1901FF81464E2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1BE3311B3818683B38328E55 /* Sources */ = {

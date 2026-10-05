@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 struct ChatMessage: Identifiable, Equatable {
     let id: UUID
@@ -17,15 +16,24 @@ struct ChatMessage: Identifiable, Equatable {
     }
 }
 
+extension DeepgramClient.Speaker {
+    var displayName: String {
+        switch self {
+        case .us: return "Gordon"
+        case .them: return "Chris"
+        }
+    }
+}
+
+/// A transcription session follows the broadcast: it starts when the extension
+/// goes live and ends once its final chunk has been sent and Deepgram has
+/// returned its last results.
 @MainActor
 final class TranscriptStore: ObservableObject {
     @Published private(set) var messages: [ChatMessage] = []
-    @Published var extensionStatus = "Idle"
-    @Published var deepgramStatus = "Idle"
-    @Published var isLive = false
-    @Published var chunksSent: UInt64 = 0
-    @Published var broadcastLive = false
-    @Published var extensionStats: ExtensionStats?
+    @Published private(set) var broadcastLive = false
+    @Published private(set) var isStopping = false
+    @Published private(set) var sessionError: String?
 
     @Published var summaryMarkdown: String = ""
     @Published var isSummarizing = false
@@ -35,93 +43,101 @@ final class TranscriptStore: ObservableObject {
     private let backgroundAudio = BackgroundAudioKeeper()
     private var deepgram: DeepgramClient?
     private var interimIDs: [DeepgramClient.Speaker: UUID] = [:]
-    private var statusCancellable: AnyCancellable?
-    private var statsCancellable: AnyCancellable?
-    private var wasBroadcastLive = false
+    private var forceEndWork: DispatchWorkItem?
 
     var deepgramAPIKey: String = ""
     var openAIAPIKey: String = ""
 
-    func start() {
+    init() {
+        watcher.start { [weak self] event in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.handle(event) }
+            }
+        }
+    }
+
+    /// Asks the extension to finish. If it doesn't respond, ends the session anyway.
+    func stop() {
+        guard broadcastLive, !isStopping else { return }
+        isStopping = true
+        watcher.requestStop()
+        let work = DispatchWorkItem { [weak self] in self?.watcher.forceEnd() }
+        forceEndWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: work)
+    }
+
+    private func handle(_ event: ChunkWatcher.Event) {
+        switch event {
+        case .started:
+            beginSession()
+        case .chunk(let data):
+            deepgram?.send(pcmChunk: data)
+        case .ended:
+            endSession()
+        }
+    }
+
+    private func beginSession() {
+        broadcastLive = true
+        isStopping = false
+        messages.removeAll()
+        interimIDs.removeAll()
+        summaryMarkdown = ""
+        summaryError = nil
+        sessionError = nil
+
         guard !deepgramAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            deepgramStatus = "Error"
+            sessionError = "Add your Deepgram key to transcribe."
             return
         }
 
         do {
             try backgroundAudio.start()
         } catch {
-            deepgramStatus = "Error"
-            return
+            sessionError = "Couldn't keep running in the background: \(error.localizedDescription)"
         }
-
-        AppGroup.clearChunks()
-        messages.removeAll()
-        interimIDs.removeAll()
-        chunksSent = 0
-        summaryMarkdown = ""
-        summaryError = nil
-        wasBroadcastLive = false
-        extensionStatus = "Waiting"
-        deepgramStatus = "Connecting"
 
         let client = DeepgramClient(apiKey: deepgramAPIKey)
-        client.onStatus = { [weak self] s in
-            Task { @MainActor in self?.applyDeepgramStatus(s) }
+        client.onError = { [weak self] error in
+            Task { @MainActor in self?.sessionError = "Deepgram: \(error.localizedDescription)" }
         }
-        client.onError = { [weak self] _ in
-            Task { @MainActor in self?.deepgramStatus = "Error" }
-        }
+        // Delivered on main; handled synchronously so the last results land before `finish` completes.
         client.onTranscript = { [weak self] event in
-            Task { @MainActor in self?.ingest(event) }
+            MainActor.assumeIsolated { self?.ingest(event) }
         }
         client.connect()
         deepgram = client
-
-        statusCancellable = watcher.$broadcastLive
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] live in
-                guard let self else { return }
-                let ended = self.wasBroadcastLive && !live
-                self.wasBroadcastLive = live
-                self.broadcastLive = live
-                self.extensionStatus = live ? "Recording" : (self.isLive ? "Waiting" : "Idle")
-                if ended {
-                    self.requestSummary(reason: "Broadcast ended")
-                }
-            }
-
-        statsCancellable = watcher.$extensionStats
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] stats in
-                self?.extensionStats = stats
-            }
-
-        watcher.start { [weak self] data in
-            Task { @MainActor in
-                self?.deepgram?.send(pcmChunk: data)
-                self?.chunksSent += 1
-            }
-        }
-
-        isLive = true
     }
 
-    func stop() {
-        statusCancellable?.cancel()
-        statusCancellable = nil
-        statsCancellable?.cancel()
-        statsCancellable = nil
-        watcher.stop()
-        deepgram?.disconnect()
-        deepgram = nil
-        backgroundAudio.stop()
-        isLive = false
+    private func endSession() {
+        forceEndWork?.cancel()
+        forceEndWork = nil
         broadcastLive = false
-        extensionStats = nil
-        extensionStatus = "Idle"
-        deepgramStatus = "Idle"
-        requestSummary(reason: "Listen stopped")
+        isStopping = true
+
+        let finishUp = { [weak self] in
+            guard let self else { return }
+            self.deepgram = nil
+            self.promoteInterims()
+            self.backgroundAudio.stop()
+            self.isStopping = false
+            self.requestSummary(reason: "Broadcast ended")
+        }
+
+        if let deepgram {
+            deepgram.finish { MainActor.assumeIsolated { finishUp() } }
+        } else {
+            finishUp()
+        }
+    }
+
+    private func promoteInterims() {
+        for id in interimIDs.values {
+            if let idx = messages.firstIndex(where: { $0.id == id }) {
+                messages[idx].isFinal = true
+            }
+        }
+        interimIDs.removeAll()
     }
 
     func requestSummary(reason: String) {
@@ -136,10 +152,7 @@ final class TranscriptStore: ObservableObject {
             return
         }
 
-        let transcript = finals.map { msg in
-            let who = msg.speaker == .us ? "Us" : "Them"
-            return "\(who): \(msg.text)"
-        }.joined(separator: "\n")
+        let transcript = finals.map { "\($0.speaker.displayName): \($0.text)" }.joined(separator: "\n")
 
         isSummarizing = true
         summaryError = nil
@@ -160,19 +173,6 @@ final class TranscriptStore: ObservableObject {
                 summaryError = error.localizedDescription
             }
             isSummarizing = false
-        }
-    }
-
-    private func applyDeepgramStatus(_ raw: String) {
-        let lower = raw.lowercased()
-        if lower.contains("connect") && !lower.contains("connected") {
-            deepgramStatus = "Connecting"
-        } else if lower.contains("connected") {
-            deepgramStatus = "Connected"
-        } else if lower.contains("closed") || lower.contains("disconnect") {
-            deepgramStatus = isLive ? "Connecting" : "Idle"
-        } else if lower.contains("error") {
-            deepgramStatus = "Error"
         }
     }
 

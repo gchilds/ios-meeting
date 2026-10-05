@@ -75,21 +75,46 @@ final class DeepgramClient: NSObject {
         }
     }
 
+    /// Sends CloseStream and waits for Deepgram to return its final results and
+    /// close the socket (or `timeout`), then tears down. Call on the main thread;
+    /// `completion` runs on main after every transcript has been delivered.
+    func finish(timeout: TimeInterval = 5, completion: @escaping () -> Void) {
+        keepAliveTimer?.invalidate()
+        keepAliveTimer = nil
+        guard let webSocket, webSocket.state == .running else {
+            disconnect()
+            completion()
+            return
+        }
+        finishCompletion = completion
+        webSocket.send(.string(#"{"type":"CloseStream"}"#)) { _ in }
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            self?.completeFinish()
+        }
+    }
+
     func disconnect() {
         keepAliveTimer?.invalidate()
         keepAliveTimer = nil
-
-        // Tell Deepgram we're done.
-        if let webSocket {
-            let close = #"{"type":"CloseStream"}"#
-            webSocket.send(.string(close)) { _ in
-                webSocket.cancel(with: .normalClosure, reason: nil)
-            }
-        }
+        webSocket?.cancel(with: .normalClosure, reason: nil)
         webSocket = nil
         session?.invalidateAndCancel()
         session = nil
-        onStatus?("Disconnected")
+    }
+
+    private var finishCompletion: (() -> Void)?
+
+    private func completeFinish() {
+        guard let completion = finishCompletion else { return }
+        finishCompletion = nil
+        disconnect()
+        completion()
+    }
+
+    private func socketDidEnd() {
+        DispatchQueue.main.async { [weak self] in
+            self?.completeFinish()
+        }
     }
 
     // MARK: - Private
@@ -105,11 +130,17 @@ final class DeepgramClient: NSObject {
     }
 
     private func listen() {
-        webSocket?.receive { [weak self] result in
+        guard let task = webSocket else { return }
+        task.receive { [weak self] result in
             guard let self else { return }
             switch result {
             case .failure(let error):
-                self.onError?(error)
+                DispatchQueue.main.async {
+                    if self.webSocket === task && self.finishCompletion == nil {
+                        self.onError?(error)
+                    }
+                }
+                self.socketDidEnd()
             case .success(let message):
                 self.handle(message)
                 self.listen()
@@ -176,5 +207,6 @@ extension DeepgramClient: URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask,
                     didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         onStatus?("Deepgram closed (\(closeCode.rawValue))")
+        socketDidEnd()
     }
 }
