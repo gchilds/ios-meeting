@@ -10,10 +10,12 @@
 		09FDF9A345E7CB6964FF7145 /* ChunkWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7814DB05E1E3FA3F941FB1B /* ChunkWriter.swift */; };
 		247D1FA669F0AF6A45404569 /* ChunkWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EDCB623F5770A73E3856DAF /* ChunkWatcher.swift */; };
 		26A59722B9DEDDD3745E255A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE3F0F839157AE802C749480 /* ContentView.swift */; };
+		34BC51AD85B30E064146386E /* BroadcastSetupUI.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7ED46395C0C56EC7BE7E6B /* MeetingAppApp.swift */; };
 		686E27320FD9457D92341ACF /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C94551A561BCEDAC29494B42 /* SampleHandler.swift */; };
 		842EA58C29454BEB2A2C68A0 /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */; };
 		86204BA1D3F95D732341DCE4 /* BroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 75132BCD89B6E90857870993 /* BroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		961388CAC72C2E23D80745C5 /* BroadcastSetupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04A512ACE739B352FA8D75B /* BroadcastSetupViewController.swift */; };
 		9B75E6E37AE498394E96F5EB /* AudioConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */; };
 		A8FF3AA2560E515EC9B51E28 /* AudioConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */; };
 		AA2F18E2F55639F3514625F5 /* DeepgramClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43C3B600D51DC774EB603DC /* DeepgramClient.swift */; };
@@ -32,6 +34,13 @@
 			remoteGlobalIDString = 70EB99D43F00ABEF1ACB7577;
 			remoteInfo = BroadcastExtension;
 		};
+		BBC8EF3319790556D863D1A3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 28ED3300EDBAAB8CE193096A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C58B0DE169CCB0349A05E934;
+			remoteInfo = BroadcastSetupUI;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -42,6 +51,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				86204BA1D3F95D732341DCE4 /* BroadcastExtension.appex in Embed Foundation Extensions */,
+				34BC51AD85B30E064146386E /* BroadcastSetupUI.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -56,11 +66,14 @@
 		2EDCB623F5770A73E3856DAF /* ChunkWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkWatcher.swift; sourceTree = "<group>"; };
 		75132BCD89B6E90857870993 /* BroadcastExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BroadcastExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		88E52F1511B5879EA80F3802 /* AudioResampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioResampler.swift; sourceTree = "<group>"; };
+		914F8DD7E5EB67A3AAA83DD7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioConstants.swift; sourceTree = "<group>"; };
 		BE3F0F839157AE802C749480 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C04A512ACE739B352FA8D75B /* BroadcastSetupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastSetupViewController.swift; sourceTree = "<group>"; };
 		C0A25EF3BBC28470A1C7CEF9 /* BroadcastExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BroadcastExtension.entitlements; sourceTree = "<group>"; };
 		C6BCED35787746DA6CCE1CE7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C94551A561BCEDAC29494B42 /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
+		CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BroadcastSetupUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBDEA5847D61FAFD6D50FDCC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CC7ED46395C0C56EC7BE7E6B /* MeetingAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingAppApp.swift; sourceTree = "<group>"; };
 		DF8C21534E2AD124148F3AA2 /* MeetingApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MeetingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -83,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				EEB4965210A9070EC581631F /* BroadcastExtension */,
+				C36E8BEBB1D93E7BF0F5005B /* BroadcastSetupUI */,
 				A8E3B8027DDEAE6D7C5AC35C /* MeetingApp */,
 				3A0B4EA38B1F045EF2D06896 /* Shared */,
 				E9EDF2A9ABEDBBD8AFDCC495 /* Products */,
@@ -104,10 +118,20 @@
 			path = MeetingApp;
 			sourceTree = "<group>";
 		};
+		C36E8BEBB1D93E7BF0F5005B /* BroadcastSetupUI */ = {
+			isa = PBXGroup;
+			children = (
+				C04A512ACE739B352FA8D75B /* BroadcastSetupViewController.swift */,
+				914F8DD7E5EB67A3AAA83DD7 /* Info.plist */,
+			);
+			path = BroadcastSetupUI;
+			sourceTree = "<group>";
+		};
 		E9EDF2A9ABEDBBD8AFDCC495 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				75132BCD89B6E90857870993 /* BroadcastExtension.appex */,
+				CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */,
 				DF8C21534E2AD124148F3AA2 /* MeetingApp.app */,
 			);
 			name = Products;
@@ -157,6 +181,7 @@
 			);
 			dependencies = (
 				736E6170AD14F114F552C55D /* PBXTargetDependency */,
+				A41F65604167029D5FAFC004 /* PBXTargetDependency */,
 			);
 			name = MeetingApp;
 			packageProductDependencies = (
@@ -164,6 +189,23 @@
 			productName = MeetingApp;
 			productReference = DF8C21534E2AD124148F3AA2 /* MeetingApp.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C58B0DE169CCB0349A05E934 /* BroadcastSetupUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D46DB27E20343A91F932FD3 /* Build configuration list for PBXNativeTarget "BroadcastSetupUI" */;
+			buildPhases = (
+				71F001976E1A0CE3E2C6BA60 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BroadcastSetupUI;
+			packageProductDependencies = (
+			);
+			productName = BroadcastSetupUI;
+			productReference = CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -179,6 +221,10 @@
 						ProvisioningStyle = Automatic;
 					};
 					8D2D29AB71085DA3CCC8E8E7 = {
+						DevelopmentTeam = VWF5KE52Z7;
+						ProvisioningStyle = Automatic;
+					};
+					C58B0DE169CCB0349A05E934 = {
 						DevelopmentTeam = VWF5KE52Z7;
 						ProvisioningStyle = Automatic;
 					};
@@ -199,6 +245,7 @@
 			projectRoot = "";
 			targets = (
 				70EB99D43F00ABEF1ACB7577 /* BroadcastExtension */,
+				C58B0DE169CCB0349A05E934 /* BroadcastSetupUI */,
 				8D2D29AB71085DA3CCC8E8E7 /* MeetingApp */,
 			);
 		};
@@ -217,6 +264,14 @@
 				AA2F18E2F55639F3514625F5 /* DeepgramClient.swift in Sources */,
 				5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */,
 				ED0B5A5C0E12FEFB59A3E3BC /* TranscriptStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		71F001976E1A0CE3E2C6BA60 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				961388CAC72C2E23D80745C5 /* BroadcastSetupViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,9 +296,31 @@
 			target = 70EB99D43F00ABEF1ACB7577 /* BroadcastExtension */;
 			targetProxy = 3345505E4A9FF608407F9881 /* PBXContainerItemProxy */;
 		};
+		A41F65604167029D5FAFC004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C58B0DE169CCB0349A05E934 /* BroadcastSetupUI */;
+			targetProxy = BBC8EF3319790556D863D1A3 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		19AEEFE525EE6BA47EDEDD2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastSetupUI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastSetupUI;
+				PRODUCT_NAME = BroadcastSetupUI;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		1E331B9F68B81DC0E71B1B5F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -437,6 +514,23 @@
 			};
 			name = Debug;
 		};
+		D35B9739EC336CC48766B7E9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastSetupUI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastSetupUI;
+				PRODUCT_NAME = BroadcastSetupUI;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		D6139813C0B646DFD55AC60A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -463,6 +557,15 @@
 			buildConfigurations = (
 				C7C8DDB2F446642156D629F5 /* Debug */,
 				2DBC7252CE4856B81BA146CE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1D46DB27E20343A91F932FD3 /* Build configuration list for PBXNativeTarget "BroadcastSetupUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				19AEEFE525EE6BA47EDEDD2F /* Debug */,
+				D35B9739EC336CC48766B7E9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

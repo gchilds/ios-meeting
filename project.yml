@@ -38,8 +38,13 @@ targets:
     dependencies:
       - target: BroadcastExtension
         embed: true
+      - target: BroadcastSetupUI
+        embed: true
     entitlements:
       path: MeetingApp/MeetingApp.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.granola.ios-meeting
 
   BroadcastExtension:
     type: app-extension
@@ -61,7 +66,26 @@ targets:
         MARKETING_VERSION: "1.0"
     entitlements:
       path: BroadcastExtension/BroadcastExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.granola.ios-meeting
 
+  BroadcastSetupUI:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BroadcastSetupUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.granola.iosmeeting.BroadcastSetupUI
+        INFOPLIST_FILE: BroadcastSetupUI/Info.plist
+        PRODUCT_NAME: BroadcastSetupUI
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: Meeting Audio
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0"
 schemes:
   MeetingApp:
     build:
