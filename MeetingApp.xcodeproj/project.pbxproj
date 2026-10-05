@@ -14,6 +14,7 @@
 		34BC51AD85B30E064146386E /* BroadcastSetupUI.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA82CAE57AE045732B3E6A53 /* BroadcastSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7ED46395C0C56EC7BE7E6B /* MeetingAppApp.swift */; };
 		6119AC073A32F9F4AF74E294 /* ExtensionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D69928A178913D24EAFDCA /* ExtensionStats.swift */; };
+		61720BF7401F98EB8089ADCE /* MusliTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B69DF0DDF1A3973B046B14E /* MusliTheme.swift */; };
 		686E27320FD9457D92341ACF /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C94551A561BCEDAC29494B42 /* SampleHandler.swift */; };
 		842EA58C29454BEB2A2C68A0 /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */; };
 		86204BA1D3F95D732341DCE4 /* BroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 75132BCD89B6E90857870993 /* BroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -23,6 +24,7 @@
 		A8FF3AA2560E515EC9B51E28 /* AudioConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6422ACF7BCA611CA7A59940 /* AudioConstants.swift */; };
 		AA2F18E2F55639F3514625F5 /* DeepgramClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43C3B600D51DC774EB603DC /* DeepgramClient.swift */; };
 		B31D25D9A165C7DC47F07495 /* MeetingNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B01D2BC44D7FFE7929B65D66 /* MeetingNotesView.swift */; };
+		BC9DCC03E8DE1227251B87B9 /* BroadcastPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBB7EE1AA08D4A244A58766 /* BroadcastPickerView.swift */; };
 		BDB97D97EC404CD3D5AA1CA4 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */; };
 		DB63D9A7149416449C687A81 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */; };
 		DB7603D8C736BBD69625B938 /* StereoAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */; };
@@ -66,12 +68,14 @@
 /* Begin PBXFileReference section */
 		05D69928A178913D24EAFDCA /* ExtensionStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStats.swift; sourceTree = "<group>"; };
 		07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundAudioKeeper.swift; sourceTree = "<group>"; };
+		0B69DF0DDF1A3973B046B14E /* MusliTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusliTheme.swift; sourceTree = "<group>"; };
 		18DEF9D16B6D093C7F516A3A /* StereoAligner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StereoAligner.swift; sourceTree = "<group>"; };
 		1963ACBF3C35BE827A9EEC4F /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptStore.swift; sourceTree = "<group>"; };
 		2D65C84D5AFBD6654C3E04BC /* MeetingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeetingApp.entitlements; sourceTree = "<group>"; };
 		2EDCB623F5770A73E3856DAF /* ChunkWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkWatcher.swift; sourceTree = "<group>"; };
 		75132BCD89B6E90857870993 /* BroadcastExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BroadcastExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7FBB7EE1AA08D4A244A58766 /* BroadcastPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastPickerView.swift; sourceTree = "<group>"; };
 		88E52F1511B5879EA80F3802 /* AudioResampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioResampler.swift; sourceTree = "<group>"; };
 		914F8DD7E5EB67A3AAA83DD7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		960E4617018C91DFB5AC9CCC /* OpenAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIClient.swift; sourceTree = "<group>"; };
@@ -117,6 +121,7 @@
 			isa = PBXGroup;
 			children = (
 				07C9EB99ED619CF0D26175F0 /* BackgroundAudioKeeper.swift */,
+				7FBB7EE1AA08D4A244A58766 /* BroadcastPickerView.swift */,
 				E5A614232B0EBE7CDABFAA29 /* ChatBubbleView.swift */,
 				2EDCB623F5770A73E3856DAF /* ChunkWatcher.swift */,
 				BE3F0F839157AE802C749480 /* ContentView.swift */,
@@ -125,6 +130,7 @@
 				2D65C84D5AFBD6654C3E04BC /* MeetingApp.entitlements */,
 				CC7ED46395C0C56EC7BE7E6B /* MeetingAppApp.swift */,
 				B01D2BC44D7FFE7929B65D66 /* MeetingNotesView.swift */,
+				0B69DF0DDF1A3973B046B14E /* MusliTheme.swift */,
 				960E4617018C91DFB5AC9CCC /* OpenAIClient.swift */,
 				28BE23AA8E9A7034CC61CAA8 /* TranscriptStore.swift */,
 			);
@@ -272,6 +278,7 @@
 				BDB97D97EC404CD3D5AA1CA4 /* AppGroup.swift in Sources */,
 				9B75E6E37AE498394E96F5EB /* AudioConstants.swift in Sources */,
 				A8221039C223F8A00A95631D /* BackgroundAudioKeeper.swift in Sources */,
+				BC9DCC03E8DE1227251B87B9 /* BroadcastPickerView.swift in Sources */,
 				842EA58C29454BEB2A2C68A0 /* ChatBubbleView.swift in Sources */,
 				247D1FA669F0AF6A45404569 /* ChunkWatcher.swift in Sources */,
 				26A59722B9DEDDD3745E255A /* ContentView.swift in Sources */,
@@ -279,6 +286,7 @@
 				6119AC073A32F9F4AF74E294 /* ExtensionStats.swift in Sources */,
 				5D329CEB873844BEC4D95801 /* MeetingAppApp.swift in Sources */,
 				B31D25D9A165C7DC47F07495 /* MeetingNotesView.swift in Sources */,
+				61720BF7401F98EB8089ADCE /* MusliTheme.swift in Sources */,
 				28E7C5F750E53EB6002FAEBF /* OpenAIClient.swift in Sources */,
 				ED0B5A5C0E12FEFB59A3E3BC /* TranscriptStore.swift in Sources */,
 			);
@@ -328,7 +336,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BroadcastSetupUI/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli Audio";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastSetupUI;
@@ -407,7 +415,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeetingApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Meeting;
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone audio is captured by the broadcast extension for meeting transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -496,7 +504,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BroadcastExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli Audio";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastExtension;
@@ -516,7 +524,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeetingApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Meeting;
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone audio is captured by the broadcast extension for meeting transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -538,7 +546,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BroadcastSetupUI/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli Audio";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastSetupUI;
@@ -556,7 +564,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BroadcastExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Meeting Audio";
+				INFOPLIST_KEY_CFBundleDisplayName = "Müsli Audio";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.granola.iosmeeting.BroadcastExtension;

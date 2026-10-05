@@ -20,7 +20,8 @@ struct ChatMessage: Identifiable, Equatable {
 @MainActor
 final class TranscriptStore: ObservableObject {
     @Published private(set) var messages: [ChatMessage] = []
-    @Published var status: String = "Idle"
+    @Published var extensionStatus = "Idle"
+    @Published var deepgramStatus = "Idle"
     @Published var isLive = false
     @Published var chunksSent: UInt64 = 0
     @Published var broadcastLive = false
@@ -43,14 +44,14 @@ final class TranscriptStore: ObservableObject {
 
     func start() {
         guard !deepgramAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            status = "Set your Deepgram API key first"
+            deepgramStatus = "Error"
             return
         }
 
         do {
             try backgroundAudio.start()
         } catch {
-            status = "Audio session failed: \(error.localizedDescription)"
+            deepgramStatus = "Error"
             return
         }
 
@@ -61,13 +62,15 @@ final class TranscriptStore: ObservableObject {
         summaryMarkdown = ""
         summaryError = nil
         wasBroadcastLive = false
+        extensionStatus = "Waiting"
+        deepgramStatus = "Connecting"
 
         let client = DeepgramClient(apiKey: deepgramAPIKey)
         client.onStatus = { [weak self] s in
-            Task { @MainActor in self?.refreshStatus(deepgram: s) }
+            Task { @MainActor in self?.applyDeepgramStatus(s) }
         }
-        client.onError = { [weak self] err in
-            Task { @MainActor in self?.status = "Error: \(err.localizedDescription)" }
+        client.onError = { [weak self] _ in
+            Task { @MainActor in self?.deepgramStatus = "Error" }
         }
         client.onTranscript = { [weak self] event in
             Task { @MainActor in self?.ingest(event) }
@@ -82,7 +85,7 @@ final class TranscriptStore: ObservableObject {
                 let ended = self.wasBroadcastLive && !live
                 self.wasBroadcastLive = live
                 self.broadcastLive = live
-                self.refreshStatus()
+                self.extensionStatus = live ? "Recording" : (self.isLive ? "Waiting" : "Idle")
                 if ended {
                     self.requestSummary(reason: "Broadcast ended")
                 }
@@ -92,7 +95,6 @@ final class TranscriptStore: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] stats in
                 self?.extensionStats = stats
-                self?.refreshStatus()
             }
 
         watcher.start { [weak self] data in
@@ -103,7 +105,6 @@ final class TranscriptStore: ObservableObject {
         }
 
         isLive = true
-        refreshStatus(deepgram: "Connecting…")
     }
 
     func stop() {
@@ -118,7 +119,8 @@ final class TranscriptStore: ObservableObject {
         isLive = false
         broadcastLive = false
         extensionStats = nil
-        status = "Stopped"
+        extensionStatus = "Idle"
+        deepgramStatus = "Idle"
         requestSummary(reason: "Listen stopped")
     }
 
@@ -135,54 +137,43 @@ final class TranscriptStore: ObservableObject {
         }
 
         let transcript = finals.map { msg in
-            let who = msg.speaker == .us ? "Us" : "Them"
+            let who = msg.speaker == .us ? "You" : "Others"
             return "\(who): \(msg.text)"
         }.joined(separator: "\n")
 
         isSummarizing = true
         summaryError = nil
-        status = "Summarizing…"
 
         let key = openAIAPIKey
         Task {
             do {
                 let sanitized = OpenAIClient.sanitize(key)
                 if !sanitized.hasPrefix("sk-") {
-                    summaryError = "OpenAI key should start with sk-… (got \(sanitized.prefix(6))…). Keys may be swapped?"
+                    summaryError = "OpenAI key should start with sk-…"
                     isSummarizing = false
-                    status = "Summary failed"
                     return
                 }
                 let client = OpenAIClient(apiKey: sanitized)
                 let markdown = try await client.summarizeMeeting(transcript: transcript)
                 summaryMarkdown = markdown
-                status = "Summary ready"
             } catch {
                 summaryError = error.localizedDescription
-                status = "Summary failed"
             }
             isSummarizing = false
         }
     }
 
-    private func refreshStatus(deepgram: String? = nil) {
-        if !isLive { return }
-        let statsBit: String
-        if let s = extensionStats {
-            statsBit = s.summary
-            if !s.lastError.isEmpty {
-                status = "\(s.summary) · \(s.lastError)"
-                return
-            }
-        } else {
-            statsBit = "no stats yet"
+    private func applyDeepgramStatus(_ raw: String) {
+        let lower = raw.lowercased()
+        if lower.contains("connect") && !lower.contains("connected") {
+            deepgramStatus = "Connecting"
+        } else if lower.contains("connected") {
+            deepgramStatus = "Connected"
+        } else if lower.contains("closed") || lower.contains("disconnect") {
+            deepgramStatus = isLive ? "Connecting" : "Idle"
+        } else if lower.contains("error") {
+            deepgramStatus = "Error"
         }
-        if broadcastLive {
-            status = "Broadcast live · \(statsBit)"
-        } else {
-            status = "Waiting for broadcast… · \(statsBit)"
-        }
-        _ = deepgram
     }
 
     private func ingest(_ event: DeepgramClient.TranscriptEvent) {

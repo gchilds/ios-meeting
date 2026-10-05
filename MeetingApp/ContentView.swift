@@ -1,5 +1,4 @@
 import SwiftUI
-import ReplayKit
 
 struct ContentView: View {
     @EnvironmentObject private var store: TranscriptStore
@@ -10,28 +9,32 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                statusBar
-                Divider()
-                TabView(selection: $selectedTab) {
-                    chatList
-                        .tabItem { Label("Transcript", systemImage: "bubble.left.and.bubble.right") }
-                        .tag(0)
-                    summaryPane
-                        .tabItem { Label("Summary", systemImage: "doc.text") }
-                        .tag(1)
+            ZStack {
+                MusliBackground()
+                VStack(spacing: 0) {
+                    statusBar
+                    TabView(selection: $selectedTab) {
+                        chatList
+                            .tabItem { Label("Transcript", systemImage: "text.bubble") }
+                            .tag(0)
+                        summaryPane
+                            .tabItem { Label("Notes", systemImage: "leaf") }
+                            .tag(1)
+                    }
+                    .tint(MusliTheme.forest)
+                    controlBar
                 }
-                Divider()
-                controlBar
             }
-            .navigationTitle("Meeting")
+            .navigationTitle("Müsli")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(MusliTheme.paper.opacity(0.95), for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showKeyField.toggle()
                     } label: {
                         Image(systemName: keysConfigured ? "key.fill" : "key")
+                            .foregroundStyle(MusliTheme.forest)
                     }
                 }
             }
@@ -56,31 +59,42 @@ struct ContentView: View {
         store.openAIAPIKey = openAIAPIKey
     }
 
-    // MARK: - Subviews
+    // MARK: - Status
 
     private var statusBar: some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(store.broadcastLive ? Color.green : (store.isLive ? Color.orange : Color.secondary.opacity(0.4)))
-                .frame(width: 8, height: 8)
-            Text(store.status)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Spacer()
-            Text("\(store.chunksSent) chunks")
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.tertiary)
+        HStack(spacing: 10) {
+            StatusPill(label: "Extension", value: store.extensionStatus, tint: extensionTint)
+            StatusPill(label: "Deepgram", value: store.deepgramStatus, tint: deepgramTint)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemBackground))
+        .padding(.vertical, 12)
     }
+
+    private var extensionTint: Color {
+        switch store.extensionStatus {
+        case "Recording": return MusliTheme.forest
+        case "Waiting": return MusliTheme.honey
+        case "Error": return .red
+        default: return MusliTheme.inkMuted.opacity(0.5)
+        }
+    }
+
+    private var deepgramTint: Color {
+        switch store.deepgramStatus {
+        case "Connected": return MusliTheme.forest
+        case "Connecting": return MusliTheme.honey
+        case "Error": return .red
+        default: return MusliTheme.inkMuted.opacity(0.5)
+        }
+    }
+
+    // MARK: - Transcript
 
     private var chatList: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
+                LazyVStack(alignment: .leading, spacing: 14) {
                     if store.messages.isEmpty {
                         emptyTranscript
                     }
@@ -100,93 +114,110 @@ struct ContentView: View {
                 }
             }
         }
-        .background(Color(.systemBackground))
     }
+
+    private var emptyTranscript: some View {
+        VStack(spacing: 14) {
+            Text("🥣")
+                .font(.system(size: 52))
+            Text("Your meeting, transcribed")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(MusliTheme.ink)
+            Text("Broadcast to capture · Listen to transcribe\nYou on mic · Others on system audio")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(MusliTheme.inkMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 48)
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Summary
 
     private var summaryPane: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if store.isSummarizing {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         ProgressView()
-                        Text("Writing meeting notes…")
-                            .foregroundStyle(.secondary)
+                            .tint(MusliTheme.forest)
+                        Text("Stirring your notes…")
+                            .font(.subheadline)
+                            .foregroundStyle(MusliTheme.inkMuted)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let error = store.summaryError, store.summaryMarkdown.isEmpty {
                     Text(error)
                         .font(.subheadline)
                         .foregroundStyle(.orange)
-                    Button("Retry summary") {
+                    Button("Try again") {
                         store.requestSummary(reason: "Retry")
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(MusliSecondaryButtonStyle())
                 } else if store.summaryMarkdown.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("No summary yet")
-                            .font(.headline)
-                        Text("Notes are generated with OpenAI when you Stop, or when the broadcast ends.")
+                        Text("Notes appear here")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(MusliTheme.ink)
+                        Text("When the broadcast ends or you tap Stop, Müsli writes a short summary.")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MusliTheme.inkMuted)
                     }
                 } else {
                     MeetingNotesView(markdown: store.summaryMarkdown)
-                    Button("Regenerate") {
+                        .padding(16)
+                        .background(MusliTheme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    Button("Regenerate notes") {
                         store.requestSummary(reason: "Regenerate")
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(MusliSecondaryButtonStyle())
                 }
             }
             .padding(16)
         }
-        .background(Color(.systemBackground))
     }
 
-    private var emptyTranscript: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "waveform.circle")
-                .font(.system(size: 40))
-                .foregroundStyle(.tertiary)
-            Text("Start a broadcast, then tap Listen")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text("Mic → Us (left) · System audio → Them (right)")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 60)
-    }
+    // MARK: - Controls
 
     private var controlBar: some View {
-        HStack(spacing: 16) {
-            BroadcastPicker()
-                .frame(width: 44, height: 44)
+        VStack(spacing: 14) {
+            HStack(alignment: .center, spacing: 20) {
+                BroadcastPickerView(isLive: store.broadcastLive)
 
-            Button {
-                if store.isLive {
-                    store.stop()
-                } else {
-                    syncKeys()
-                    store.start()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(store.isLive ? "Listening…" : "Ready when you are")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MusliTheme.ink)
+
+                    Button {
+                        if store.isLive {
+                            store.stop()
+                        } else {
+                            syncKeys()
+                            store.start()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: store.isLive ? "stop.fill" : "waveform")
+                            Text(store.isLive ? "Stop" : "Listen")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                    }
+                    .buttonStyle(MusliPrimaryButtonStyle(isDestructive: store.isLive))
+                    .disabled(deepgramAPIKey.isEmpty && !store.isLive)
                 }
-            } label: {
-                Label(
-                    store.isLive ? "Stop" : "Listen",
-                    systemImage: store.isLive ? "stop.circle.fill" : "ear.fill"
-                )
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(store.isLive ? .red : .accentColor)
-            .disabled(deepgramAPIKey.isEmpty && !store.isLive)
         }
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(
+            MusliTheme.oat.opacity(0.85),
+            in: UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
+        )
     }
+
+    // MARK: - Keys sheet
 
     private var apiKeySheet: some View {
         NavigationStack {
@@ -197,7 +228,7 @@ struct ContentView: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("From console.deepgram.com — used for live streaming transcription.")
+                    Text("Live transcription via Deepgram.")
                 }
 
                 Section {
@@ -206,7 +237,7 @@ struct ContentView: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } footer: {
-                    Text("From platform.openai.com → API keys. Must start with sk- (not the Deepgram key). Paste the raw key only — no “Bearer”. Needs billing enabled on the OpenAI project.")
+                    Text("Meeting notes via OpenAI (sk-…).")
                 }
             }
             .navigationTitle("API Keys")
@@ -221,15 +252,41 @@ struct ContentView: View {
     }
 }
 
-struct BroadcastPicker: UIViewRepresentable {
-    func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
-        let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
-        picker.preferredExtension = "com.granola.iosmeeting.BroadcastExtension"
-        picker.showsMicrophoneButton = true
-        return picker
+// MARK: - Button styles
+
+struct MusliPrimaryButtonStyle: ButtonStyle {
+    var isDestructive = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(.white)
+            .background {
+                Capsule().fill(buttonFill)
+            }
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 
-    func updateUIView(_ uiView: RPSystemBroadcastPickerView, context: Context) {}
+    private var buttonFill: AnyShapeStyle {
+        if isDestructive {
+            AnyShapeStyle(LinearGradient(colors: [.red.opacity(0.85), .red], startPoint: .topLeading, endPoint: .bottomTrailing))
+        } else {
+            AnyShapeStyle(MusliTheme.listenGradient)
+        }
+    }
+}
+
+struct MusliSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(MusliTheme.forest)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(MusliTheme.oat, in: Capsule())
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
 }
 
 #Preview {
